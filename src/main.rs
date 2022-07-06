@@ -1,3 +1,10 @@
+use anagrambot::default_wordlist;
 fn main() {
-    println!("Hello, world!");
+
+    if let Some(content) = default_wordlist::default_wordlist_content()
+    {
+        print!("{}", content);
+    } else {
+        println!("No default wordlist!");
+    }
 }

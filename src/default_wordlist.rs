@@ -10,6 +10,7 @@
 //! in source distributions of the anagrambot project as `WORDLIST-LICENSE` or can be viewed
 //! [online](http://changelogs.ubuntu.com/changelogs/pool/main/s/scowl/scowl_2020.12.07-2/copyright). 
 
+use crate::wordlist::BorrowedWordList;
 
 /// Returns the default wordlist content as a string literal, if present
 /// 
@@ -27,3 +28,17 @@ pub const fn default_wordlist_content() -> Option<&'static str>
     return Some(include_str!("../words.txt"));
 }
 
+/// Returns the default wordlist as a BorrowedWordlist
+/// 
+/// If the project was built normally (i.e. without the `no-default-wordlist` feature),
+/// this function will return `Some` containing the wordlist. 
+/// 
+/// If the project was built with the `no-default-wordlist` feature,
+/// this function will return `None`.
+pub fn default_wordlist() -> Option<BorrowedWordList<'static>>
+{
+    match default_wordlist_content(){
+        None => None,
+        Some(wordlist_content) => {Some(wordlist_content.lines().collect())}
+    }
+}

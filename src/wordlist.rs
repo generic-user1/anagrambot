@@ -81,3 +81,75 @@ mod borrowedwordlist_tests{
         }
     }
 }
+
+/// A [Wordlist] implementor that owns its words
+/// 
+/// Useful for creating a `Wordlist` from new data (such as from a file)
+pub struct OwnedWordList {
+    word_vec: Vec<String>
+}
+
+impl OwnedWordList{
+    /// Construct a new `OwnedWordList` from an iterator of [String](std::string::String)
+    pub fn new(word_iter: impl IntoIterator<Item = String>) -> Self
+    {
+        Self{word_vec: word_iter.into_iter().collect()}
+    }
+}
+
+impl FromIterator<String> for OwnedWordList{
+    fn from_iter<T: IntoIterator<Item = String>>(iter: T) -> Self {
+        OwnedWordList::new(iter)
+    }
+}
+
+impl<'a> Wordlist<'a> for OwnedWordList{
+    // this long type has to be written out because impl trait syntax
+    // cannot be used for associated types
+    type IterType = std::iter::Map<std::slice::Iter<'a, String>, fn(&String) -> &str>;
+
+    fn includes_word(&self, word: &str) -> bool {
+        let word = String::from(word);
+        self.word_vec.contains(&word)
+    }
+
+    fn iter(&'a self) -> Self::IterType {
+        self.word_vec.iter().map(|p|{p.as_str()})
+    }
+}
+
+#[cfg(test)]
+mod ownedwordlist_tests{
+    use super::{OwnedWordList, Wordlist};
+
+    #[test]
+    fn test_includes_word()
+    {
+        let word_strings: [String; 3] = [String::from("a"), String::from("b"), String::from("c")];
+
+        let list = OwnedWordList::new(word_strings);
+        assert!(list.includes_word("a"));
+        assert!(!list.includes_word("not in list"))
+    }
+
+    #[test]
+    fn test_to_from_iter()
+    {
+
+        // two are needed because the first OwnedWordList will take ownership of the first
+        let word_strings_a: [String; 3] = [String::from("a"), String::from("b"), String::from("c")];
+        let word_strings_b: [String; 3] = [String::from("a"), String::from("b"), String::from("c")];
+
+
+        use core::iter;
+        let list_from_iter: OwnedWordList = word_strings_a.into_iter().collect();
+        let list_from_new = OwnedWordList::new(word_strings_b);
+    
+        let first_iter = list_from_iter.iter();
+        let second_iter = list_from_new.iter();
+
+        for (first, second) in iter::zip(first_iter, second_iter){
+            assert_eq!(first, second);
+        }
+    }
+}

@@ -118,3 +118,45 @@ pub fn are_proper_anagrams<'a>(word_a: &str, word_b: &str, wordlist: &impl Wordl
     //now that we ensured both words are real words, use the standard are_anagrams function
     are_anagrams(word_a, word_b)
 }
+
+
+// TODO: use Heap's Algorithm (https://en.wikipedia.org/wiki/Heap%27s_algorithm)
+// to create a method to generate all possible anagrams of a string
+// named find_anagrams
+
+
+/// An iterator over all the proper anagrams of a word
+/// 
+/// The return value of [find_proper_anagrams]
+pub struct ProperAnagramsIter<'a, T>
+where T: Iterator<Item = &'a str>
+{
+    word: &'a str,
+    wordlist_iter: T
+}
+
+impl<'a, T> Iterator for ProperAnagramsIter<'a, T>
+where T: Iterator<Item = &'a str>
+{
+    type Item = &'a str;
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some(next_word) = self.wordlist_iter.next() {
+            if are_anagrams(self.word, next_word){
+                return Some(next_word);
+            }
+        }
+        None
+    }
+}
+
+
+/// Returns a [ProperAnagramsIter] over all proper anagrams of `word`
+/// 
+/// Note that this method does not check if `word` is present in `wordlist`;
+/// this is the responsibility of the caller (if desired)
+pub fn find_proper_anagrams<'a, T>(word: &'a str, wordlist: &'a T)
+ -> ProperAnagramsIter<'a, impl Iterator<Item = &'a str>>
+where T: Wordlist<'a>
+{
+    ProperAnagramsIter { word, wordlist_iter: wordlist.iter()}
+}

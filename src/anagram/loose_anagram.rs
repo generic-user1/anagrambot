@@ -59,49 +59,27 @@ fn word_fits(word_map_a: &Charmap, word_map_b: &Charmap) -> bool
 /// pre-computation before it could return its first value.
 /// Thus, loose anagrams are returned as a `Vec` rather than an iterator
 /// (unlike [find_proper_anagrams])
-pub fn find_loose_anagrams<'a, T>(word: &str, wordlist: &'a T) -> Vec<String>
+pub fn find_loose_anagrams<'a, T>(target_word: &str, wordlist: &'a T) -> Vec<String>
 where T: Wordlist<'a>
 {
 
-    // define the recursive function used to find loose anagrams
-    fn recursive_find_loose_anagrams<'a>(target_map: &Charmap, partial_word: &str,
-        partial_map: &Charmap, wordlist: &Vec<(&'a str, Charmap)>) -> Vec<String>
-    {
-        if *target_map == *partial_map {
-            return vec![String::from(partial_word)];
-        }
-
-        let mut returnable_words: Vec<String> = Vec::new();
-
-        for (word, charmap) in wordlist{
-            let summed_word = if partial_word == "" {String::from(*word)} else {
-                String::from(partial_word) + " " + word
-            };
-            let summed_map = add_charmaps(partial_map, charmap);
-            if summed_map == *target_map{
-                returnable_words.push(summed_word);
-            }
-            else if word_fits(target_map, &summed_map){
-                returnable_words.append(
-                    &mut recursive_find_loose_anagrams(target_map, summed_word.as_str(),
-                        &summed_map, wordlist)
-                );
-            }
-        }
-        returnable_words
-    }
-
     // get the charcount map of word (ignoring spaces)
-    let word_charcount_map = get_charcount_map(word, true);
+    let target_charmap = get_charcount_map(target_word, true);
     
+    let mut result_vec: Vec<String> = Vec::new();
+
+    // vector containing the words to test fit into target word
+    // this is where created words will be stored before verification
+    // once verified, they are moved to result_vec
+    let mut words_to_try: Vec<(String, Charmap)>;
+
     // find every word in the wordlist that can fit into the base word
-    // and store the word and hashmap
-    let full_candidate_set: Vec<(&str, Charmap)> = 
-        wordlist.iter().filter_map(|word_b|{
+    // and store them in full_candidate_set
+    let full_candidate_set: Vec<(&str, Charmap)> = wordlist.iter().filter_map(|word_b|{
             let charcount_map = get_charcount_map(word_b, true);
-            if word_fits(&word_charcount_map, &charcount_map){
+            if word_fits(&target_charmap, &charcount_map){
                 //dont include word if it's the same word
-                if word == word_b{
+                if target_word == word_b{
                     None
                 } else {
                     Some((word_b, charcount_map))
@@ -111,12 +89,35 @@ where T: Wordlist<'a>
             }
         }
     ).collect();
-    
-    recursive_find_loose_anagrams(&word_charcount_map, 
-        "", 
-        &Charmap::new(), 
-        &full_candidate_set
-    )
+
+    // initially fill words_to_try with the candidate set
+    words_to_try = full_candidate_set.iter().map(|item|{
+        (item.0.to_string(), item.1.clone())
+    }).collect();
+
+    // iterate through words_to_try until it is empty
+    // we can't use iterator because we need to pop each value off individually
+    while let Some((word, word_charmap)) = words_to_try.pop() {
+
+        if word_charmap == target_charmap{
+            result_vec.push(word);
+        } else {
+            for (subword, submap) in full_candidate_set.iter() {
+                let summed_map = 
+                    add_charmaps(&word_charmap, &submap);
+                if word_fits(&target_charmap, &summed_map){
+                    let summed_word = if word == "" {
+                        String::from(*subword)
+                    } else {
+                        word.clone() + " " + subword
+                    };
+                    words_to_try.push((summed_word, summed_map));
+                }
+            }
+        }
+    }
+
+    result_vec
 }
 
 /// Adds charmap_a to charmap_b and returns the result

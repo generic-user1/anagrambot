@@ -1,6 +1,9 @@
 use anagrambot::default_wordlist;
 use anagrambot::anagram;
 //use anagrambot::wordlist;
+
+use std::time;
+
 fn main() {
 
    let wordlist = default_wordlist::default_wordlist()
@@ -13,11 +16,22 @@ fn main() {
 
     let target_word = "anagram";
     
+    let start_time = time::Instant::now();
+
     let loose_anagrams = anagram::find_loose_anagrams(target_word, &wordlist);
+
+    let run_duration = (time::Instant::now() - start_time).as_nanos();
+    let anagram_count = loose_anagrams.len();
 
     for loose_anagram in loose_anagrams{
         println!("{} is anagram of {}", target_word, loose_anagram);
     }
+
+    println!("took {}s ({}ns) to find {} anagrams", 
+        (run_duration as f64/1e9),
+        run_duration,
+        anagram_count
+    );
 }
 
 /*

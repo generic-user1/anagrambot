@@ -68,11 +68,6 @@ where T: Wordlist<'a>
     
     let mut result_vec: Vec<String> = Vec::new();
 
-    // vector containing the words to test fit into target word
-    // this is where created words will be stored before verification
-    // once verified, they are moved to result_vec
-    let mut words_to_try: Vec<(String, Charmap, Vec<&(&str, Charmap)>)>;
-
     // find every word in the wordlist that can fit into the base word
     // and store them in full_candidate_set
     let full_candidate_set: Vec<(&str, Charmap)> = wordlist.iter().filter_map(|word_b|{
@@ -90,17 +85,22 @@ where T: Wordlist<'a>
         }
     ).collect();
 
+    // vector containing the words to test fit into target word
+    // this is where created words will be stored before verification
+    // once verified, they are moved to result_vec
+    let mut words_to_try: Vec<(Vec<&str>, Charmap, Vec<&(&str, Charmap)>)>;
+
     // initially fill words_to_try with the candidate set
     words_to_try = full_candidate_set.iter().map(|item|{
-        (item.0.to_string(), item.1.clone(), full_candidate_set.iter().collect())
+        (vec![item.0], item.1.clone(), full_candidate_set.iter().collect())
     }).collect();
 
     // iterate through words_to_try until it is empty
     // we can't use iterator because we need to pop each value off individually
-    while let Some((word, word_charmap, allowed_words)) = words_to_try.pop() {
+    while let Some((word_vec, word_charmap, allowed_words)) = words_to_try.pop() {
 
         if word_charmap == target_charmap{
-            result_vec.push(word);
+            result_vec.push(word_vec.join(" "));
         } else {
             //find reduced map; the map that words must fit into to still fit into
             //the target word after 'word' has been included
@@ -114,15 +114,14 @@ where T: Wordlist<'a>
             for used_word in used_words.iter() 
             {
                 let (subword, submap) = used_word;
+                
+                let mut subword_vec:Vec<&str> = Vec::with_capacity(word_vec.len() + 1);
+                subword_vec.clone_from(&word_vec);
+                subword_vec.push(subword);
 
                 let summed_map = 
                     add_charmaps(&word_charmap, &submap);
-                let summed_word = if word == "" {
-                    String::from(*subword)
-                } else {
-                    word.clone() + " " + subword
-                };
-                words_to_try.push((summed_word, summed_map, used_words.clone()));
+                words_to_try.push((subword_vec, summed_map, used_words.clone()));
             }
         }
     }

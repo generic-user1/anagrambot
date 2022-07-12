@@ -14,7 +14,7 @@ fn main() {
     println!("largest word is \"{}\", with {} loose anagrams", largest_word, count);
     */
 
-    let target_word = "anagram";
+    let target_word = "Adirondacks's";
     
     let start_time = time::Instant::now();
 

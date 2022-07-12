@@ -102,17 +102,24 @@ where T: Wordlist<'a>
         if word_charmap == target_charmap{
             result_vec.push(word);
         } else {
-            for (subword, submap) in full_candidate_set.iter() {
+            //find reduced map; the map that words must fit into to still fit into
+            //the target word after 'word' has been included
+            let reduced_map = 
+                sub_charmaps(&target_charmap, &word_charmap);
+            
+            for (subword, submap) in full_candidate_set.iter()
+                .filter(|item|{
+                    word_fits(&reduced_map, &item.1)
+                }) 
+            {
                 let summed_map = 
                     add_charmaps(&word_charmap, &submap);
-                if word_fits(&target_charmap, &summed_map){
-                    let summed_word = if word == "" {
-                        String::from(*subword)
-                    } else {
-                        word.clone() + " " + subword
-                    };
-                    words_to_try.push((summed_word, summed_map));
-                }
+                let summed_word = if word == "" {
+                    String::from(*subword)
+                } else {
+                    word.clone() + " " + subword
+                };
+                words_to_try.push((summed_word, summed_map));
             }
         }
     }
@@ -133,5 +140,40 @@ fn add_charmaps(charmap_a: &Charmap, charmap_b: &Charmap) -> Charmap
             None => {new_charmap.insert(*key, *value);}
         }
     }
+    new_charmap
+}
+
+/// Subtracts small_charmap from big_charmap and returns the result
+/// 
+/// return value contains all keys of big_charmap, except those
+/// whose values are exactly matched within small_charmap (which are removed)
+/// 
+///# Panics
+/// 
+/// This function panics if small_charmap does not fit within big_charmap
+/// (i.e. `word_fits(big_charmap, small_charmap)` returns false)
+fn sub_charmaps(big_charmap: &Charmap, small_charmap: &Charmap) -> Charmap
+{
+    if !word_fits(big_charmap, small_charmap){
+        panic!("Tried to subtract a bigger charmap from a smaller charmap");
+    }
+
+    let mut new_charmap = Charmap::new();
+    for (key, bigvalue) in big_charmap{
+        match small_charmap.get(key){
+            None => {new_charmap.insert(*key, *bigvalue);},
+            Some(smallvalue) => {
+                //using word_fits earlier already ensured smallvalue is
+                //less than or equal to bigvalue, so if they are not equal
+                //then smallvalue must be less than bigvalue
+                //if they are equal, the result of the subtraction would be zero
+                //and we don't need to insert anything
+                if smallvalue != bigvalue{
+                    new_charmap.insert(*key, *bigvalue - *smallvalue);
+                }
+            }
+        }
+    }
+
     new_charmap
 }

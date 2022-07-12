@@ -71,7 +71,7 @@ where T: Wordlist<'a>
     // vector containing the words to test fit into target word
     // this is where created words will be stored before verification
     // once verified, they are moved to result_vec
-    let mut words_to_try: Vec<(String, Charmap)>;
+    let mut words_to_try: Vec<(String, Charmap, Vec<&(&str, Charmap)>)>;
 
     // find every word in the wordlist that can fit into the base word
     // and store them in full_candidate_set
@@ -92,12 +92,12 @@ where T: Wordlist<'a>
 
     // initially fill words_to_try with the candidate set
     words_to_try = full_candidate_set.iter().map(|item|{
-        (item.0.to_string(), item.1.clone())
+        (item.0.to_string(), item.1.clone(), full_candidate_set.iter().collect())
     }).collect();
 
     // iterate through words_to_try until it is empty
     // we can't use iterator because we need to pop each value off individually
-    while let Some((word, word_charmap)) = words_to_try.pop() {
+    while let Some((word, word_charmap, allowed_words)) = words_to_try.pop() {
 
         if word_charmap == target_charmap{
             result_vec.push(word);
@@ -107,11 +107,14 @@ where T: Wordlist<'a>
             let reduced_map = 
                 sub_charmaps(&target_charmap, &word_charmap);
             
-            for (subword, submap) in full_candidate_set.iter()
-                .filter(|item|{
-                    word_fits(&reduced_map, &item.1)
-                }) 
+            let used_words: Vec<&(&str, Charmap)> = allowed_words.into_iter().filter(|item|{
+                word_fits(&reduced_map, &item.1)
+            }).collect();
+
+            for used_word in used_words.iter() 
             {
+                let (subword, submap) = used_word;
+
                 let summed_map = 
                     add_charmaps(&word_charmap, &submap);
                 let summed_word = if word == "" {
@@ -119,7 +122,7 @@ where T: Wordlist<'a>
                 } else {
                     word.clone() + " " + subword
                 };
-                words_to_try.push((summed_word, summed_map));
+                words_to_try.push((summed_word, summed_map, used_words.clone()));
             }
         }
     }

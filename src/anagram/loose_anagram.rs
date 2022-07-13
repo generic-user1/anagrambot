@@ -4,6 +4,7 @@
 /// number of spaces (i.e. a different number of words).
 
 use super::{Charmap, Wordlist, get_charcount_map};
+use std::collections::HashMap;
 
 /// Given the charcount map of word a and the charcount map of word b,
 /// checks if word b would fit into word_a (i.e. that map b only has keys
@@ -85,35 +86,62 @@ where T: Wordlist<'a>
         }
     ).collect();
 
+    // hashmap containing the wordset that will fit into the specified charmap
+    let mut candidate_map: HashMap<Charmap, Vec<&(&str, Charmap)>> = HashMap::new();
+    candidate_map.insert(target_charmap.clone(), full_candidate_set.iter().collect());
+
     // vector containing the words to test fit into target word
     // this is where created words will be stored before verification
     // once verified, they are moved to result_vec
-    let mut words_to_try: Vec<(Vec<&str>, Charmap, Vec<&(&str, Charmap)>)>;
+    let mut words_to_try: Vec<(Vec<&str>, Charmap, Charmap)>;
+    //tuple member 1 is the words that combine to make this word
+    //tuple member 2 is the charmap of this word
+    //tuple member 3 is the reduced charmap of this word's parent,
+    //which was used to find this word
 
     // initially fill words_to_try with the candidate set
     words_to_try = full_candidate_set.iter().map(|item|{
-        (vec![item.0], item.1.clone(), full_candidate_set.iter().collect())
+        (vec![item.0], item.1.clone(), target_charmap.clone())
     }).collect();
 
     // iterate through words_to_try until it is empty
     // we can't use iterator because we need to pop each value off individually
-    while let Some((word_vec, word_charmap, allowed_words)) = words_to_try.pop() {
+    while let Some((word_vec, word_charmap, parent_reduced_charmap)) 
+    = words_to_try.pop() {
 
         if word_charmap == target_charmap{
             result_vec.push(word_vec.join(" "));
         } else {
+
             //find reduced map; the map that words must fit into to still fit into
             //the target word after 'word' has been included
             let reduced_map = 
                 sub_charmaps(&target_charmap, &word_charmap);
             
-            let used_words: Vec<&(&str, Charmap)> = allowed_words.into_iter().filter(|item|{
-                word_fits(&reduced_map, &item.1)
-            }).collect();
+            let allowed_words = match candidate_map.get(&reduced_map){
+                Some(map) => map,
+                None => {
+                    // this word hasn't had allowed words generated yet
+                    // create allowed words as a subset of parent's allowed words
+                    let parent_words = 
+                        candidate_map.get(&parent_reduced_charmap).unwrap();
+                    
+                    let allowed_words = parent_words.iter()
+                    .filter_map(|item|{
+                        if word_fits(&reduced_map, &item.1){
+                            Some(*item)
+                        } else {
+                            None
+                        }
+                    }).collect();
+                    candidate_map.insert(reduced_map.clone(), allowed_words);
+                    candidate_map.get(&reduced_map).unwrap()
+                }
+            };
 
-            for used_word in used_words.iter() 
+            for allowed_word in allowed_words.iter() 
             {
-                let (subword, submap) = used_word;
+                let (subword, submap) = allowed_word;
                 
                 let mut subword_vec:Vec<&str> = Vec::with_capacity(word_vec.len() + 1);
                 subword_vec.clone_from(&word_vec);
@@ -121,7 +149,7 @@ where T: Wordlist<'a>
 
                 let summed_map = 
                     add_charmaps(&word_charmap, &submap);
-                words_to_try.push((subword_vec, summed_map, used_words.clone()));
+                words_to_try.push((subword_vec, summed_map, reduced_map.clone()));
             }
         }
     }

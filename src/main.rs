@@ -4,7 +4,7 @@ use anagrambot::anagram;
 
 use std::time;
 
-const PRINT_RESULTS: bool = true;
+const PRINT_RESULTS: bool = false;
 
 fn main() {
 

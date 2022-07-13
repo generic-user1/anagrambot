@@ -18,12 +18,10 @@
 //! - "race" and "care" are proper anagrams because they are anagrams and both words
 //! - "race" and "reca" are not proper anagrams because "reca" is not a word
 
-
-use std::collections::HashMap;
-
 use crate::wordlist::{Wordlist};
 
-type Charmap = HashMap<char, u32>;
+use std::collections::BTreeMap;
+type Charmap = BTreeMap<char, u32>;
 
 pub mod loose_anagram;
 pub use loose_anagram::find_loose_anagrams;
@@ -36,7 +34,7 @@ pub use loose_anagram::find_loose_anagrams;
 /// If `ignore_spaces` is true, space characters `' '` will be entirely skipped over
 fn get_charcount_map(word: &str, ignore_spaces: bool) -> Charmap
 {
-    let mut lettercount_map = HashMap::new();
+    let mut lettercount_map = Charmap::new();
 
     for letter in word.chars(){
         if ignore_spaces && letter == ' '{

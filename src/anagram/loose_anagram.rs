@@ -71,7 +71,7 @@ where T: Wordlist<'a>
 
     // find every word in the wordlist that can fit into the base word
     // and store them in full_candidate_set
-    let full_candidate_set: Vec<(&str, Charmap)> = wordlist.iter().filter_map(|word_b|{
+    let full_candidate_set: HashMap<&str, Charmap> = wordlist.iter().filter_map(|word_b|{
             let charcount_map = get_charcount_map(word_b, true);
             if word_fits(&target_charmap, &charcount_map){
                 //dont include word if it's the same word
@@ -87,8 +87,9 @@ where T: Wordlist<'a>
     ).collect();
 
     // hashmap containing the wordset that will fit into the specified charmap
-    let mut candidate_map: HashMap<Charmap, Vec<&(&str, Charmap)>> = HashMap::new();
-    candidate_map.insert(target_charmap.clone(), full_candidate_set.iter().collect());
+    let mut candidate_map: HashMap<Charmap, Vec<(&str, &Charmap)>> = HashMap::new();
+    candidate_map.insert(target_charmap.clone(), full_candidate_set.iter()
+    .map(|item|{(*item.0, item.1)}).collect());
 
     // vector containing the words to test fit into target word
     // this is where created words will be stored before verification
@@ -101,7 +102,7 @@ where T: Wordlist<'a>
 
     // initially fill words_to_try with the candidate set
     words_to_try = full_candidate_set.iter().map(|item|{
-        (vec![item.0], item.1.clone())
+        (vec![*item.0], item.1.clone())
     }).collect();
 
     // iterate through words_to_try until it is empty
@@ -127,9 +128,9 @@ where T: Wordlist<'a>
                     // this word hasn't had allowed words generated yet
                     // create allowed words as a subset of parent's allowed words
                     let last_word_charmap = 
-                        get_charcount_map(word_vec.last().unwrap(), false);
+                        full_candidate_set.get(word_vec.last().unwrap()).unwrap();
                     let parent_reduced_charmap = 
-                        add_charmaps(&reduced_map, &last_word_charmap);
+                        add_charmaps(&reduced_map, last_word_charmap);
                     
                     let parent_words = 
                         candidate_map.get(&parent_reduced_charmap).unwrap();

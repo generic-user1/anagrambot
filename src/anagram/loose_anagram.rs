@@ -93,7 +93,7 @@ where T: Wordlist<'a>
     // vector containing the words to test fit into target word
     // this is where created words will be stored before verification
     // once verified, they are moved to result_vec
-    let mut words_to_try: Vec<(Vec<&str>, Charmap, Charmap)>;
+    let mut words_to_try: Vec<(Vec<&str>, Charmap)>;
     //tuple member 1 is the words that combine to make this word
     //tuple member 2 is the charmap of this word
     //tuple member 3 is the reduced charmap of this word's parent,
@@ -101,12 +101,12 @@ where T: Wordlist<'a>
 
     // initially fill words_to_try with the candidate set
     words_to_try = full_candidate_set.iter().map(|item|{
-        (vec![item.0], item.1.clone(), target_charmap.clone())
+        (vec![item.0], item.1.clone())
     }).collect();
 
     // iterate through words_to_try until it is empty
     // we can't use iterator because we need to pop each value off individually
-    while let Some((word_vec, word_charmap, parent_reduced_charmap)) 
+    while let Some((word_vec, word_charmap)) 
     = words_to_try.pop() {
 
         if word_charmap == target_charmap{
@@ -116,13 +116,21 @@ where T: Wordlist<'a>
             //find reduced map; the map that words must fit into to still fit into
             //the target word after 'word' has been included
             let reduced_map = 
-                sub_charmaps(&target_charmap, &word_charmap);
+                // it is safe to use sub_charmaps here because the word charmap will always fit
+                // within the target charmap; if it didn't, it wouldn't be in words_to_try
+                unsafe {sub_charmaps(&target_charmap, &word_charmap)};
             
             let allowed_words = match candidate_map.get(&reduced_map){
                 Some(map) => map,
                 None => {
+
                     // this word hasn't had allowed words generated yet
                     // create allowed words as a subset of parent's allowed words
+                    let last_word_charmap = 
+                        get_charcount_map(word_vec.last().unwrap(), false);
+                    let parent_reduced_charmap = 
+                        add_charmaps(&reduced_map, &last_word_charmap);
+                    
                     let parent_words = 
                         candidate_map.get(&parent_reduced_charmap).unwrap();
                     
@@ -134,8 +142,8 @@ where T: Wordlist<'a>
                             None
                         }
                     }).collect();
-                    candidate_map.insert(reduced_map.clone(), allowed_words);
-                    candidate_map.get(&reduced_map).unwrap()
+                    //store allowed words in candidate_map and return ref to newly stored words
+                    candidate_map.entry(reduced_map).or_insert(allowed_words)
                 }
             };
 
@@ -149,7 +157,7 @@ where T: Wordlist<'a>
 
                 let summed_map = 
                     add_charmaps(&word_charmap, &submap);
-                words_to_try.push((subword_vec, summed_map, reduced_map.clone()));
+                words_to_try.push((subword_vec, summed_map));
             }
         }
     }
@@ -178,16 +186,12 @@ fn add_charmaps(charmap_a: &Charmap, charmap_b: &Charmap) -> Charmap
 /// return value contains all keys of big_charmap, except those
 /// whose values are exactly matched within small_charmap (which are removed)
 /// 
-///# Panics
+///# Unsafety
 /// 
-/// This function panics if small_charmap does not fit within big_charmap
-/// (i.e. `word_fits(big_charmap, small_charmap)` returns false)
-fn sub_charmaps(big_charmap: &Charmap, small_charmap: &Charmap) -> Charmap
+/// If small_charmap does not fit within big_charmap, incorrect behavior may result,
+/// but this function does not check if small_charmap fits within big_charmap
+unsafe fn sub_charmaps(big_charmap: &Charmap, small_charmap: &Charmap) -> Charmap
 {
-    if !word_fits(big_charmap, small_charmap){
-        panic!("Tried to subtract a bigger charmap from a smaller charmap");
-    }
-
     let mut new_charmap = Charmap::new();
     for (key, bigvalue) in big_charmap{
         match small_charmap.get(key){

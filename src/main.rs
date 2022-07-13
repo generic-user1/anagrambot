@@ -4,6 +4,8 @@ use anagrambot::anagram;
 
 use std::time;
 
+const PRINT_RESULTS: bool = true;
+
 fn main() {
 
    let wordlist = default_wordlist::default_wordlist()
@@ -23,8 +25,10 @@ fn main() {
     let run_duration = (time::Instant::now() - start_time).as_nanos();
     let anagram_count = loose_anagrams.len();
 
-    for loose_anagram in loose_anagrams{
-        println!("{} is anagram of {}", target_word, loose_anagram);
+    if PRINT_RESULTS{
+        for loose_anagram in loose_anagrams{
+            println!("{} is anagram of {}", target_word, loose_anagram);
+        }
     }
 
     println!("took {}s ({}ns) to find {} anagrams", 

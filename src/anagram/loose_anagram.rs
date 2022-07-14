@@ -44,7 +44,98 @@ fn word_fits(word_map_a: &Charmap, word_map_b: &Charmap) -> bool
     true
 }
 
-/// Returns a `Vec<String>` of all loose anagrams of `word`
+/// An iterator over all the loose anagrams of a word
+/// 
+/// The return value of [find_loose_anagrams]
+pub struct LooseAnagramsIterator<'a> {
+    target_charmap: Charmap,
+    full_candidate_set: HashMap<&'a str, Charmap>,
+    candidate_map: HashMap<Charmap, Vec<(&'a str, Charmap)>>,
+    words_to_try: Vec<(Vec<&'a str>, Charmap)>
+}
+
+impl<'a> Iterator for LooseAnagramsIterator<'a> {
+    type Item = String;
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some((word_vec, word_charmap)) 
+        = self.words_to_try.pop() {
+            if word_charmap == self.target_charmap{
+                return Some(word_vec.join(" "));
+            } else {
+                let allowed_words = match self.candidate_map.get(&word_charmap){
+                    Some(map) => map,
+                    None => {
+                        // this word hasn't had allowed words generated yet
+                        // create allowed words as a subset of parent's allowed words
+
+                        let last_word = word_vec.last().unwrap();
+                        let last_word_charmap = self.full_candidate_set.get(last_word).unwrap();
+                        let parent_charmap = 
+                            unsafe{
+                                sub_charmaps(&word_charmap, last_word_charmap)
+                            };
+                        
+                        let parent_words = 
+                            match self.candidate_map.get(&parent_charmap){
+                                Some(val) => val,
+                                None => {
+                                    let reduced_map =
+                                    // it is safe to use sub_charmaps here because the word charmap will always fit
+                                    // within the target charmap; if it didn't, it wouldn't be in words_to_try
+                                    unsafe {sub_charmaps(&self.target_charmap, &parent_charmap)};
+
+
+                                    let allowed_words = self.full_candidate_set.iter()
+                                                .filter_map(|item|{
+                                                    if word_fits(&reduced_map, &item.1){
+                                                        Some((*item.0, item.1.clone()))
+                                                    } else {
+                                                        None
+                                                    }
+                                                }).collect();
+                                    self.candidate_map.entry(parent_charmap).or_insert(allowed_words)
+                                }
+                            };
+                        
+                        //find reduced map; the map that words must fit into to still fit into
+                        //the target word after 'word' has been included
+                        let reduced_map = 
+                        // it is safe to use sub_charmaps here because the word charmap will always fit
+                        // within the target charmap; if it didn't, it wouldn't be in words_to_try
+                        unsafe {sub_charmaps(&self.target_charmap, &word_charmap)};
+
+                        let allowed_words = parent_words.iter()
+                        .filter_map(|item|{
+                            if word_fits(&reduced_map, &item.1){
+                                Some(item.clone())
+                            } else {
+                                None
+                            }
+                        }).collect();
+                        //store allowed words in candidate_map and return ref to newly stored words
+                        self.candidate_map.entry(word_charmap.clone()).or_insert(allowed_words)
+                    }
+                };
+
+                for allowed_word in allowed_words.iter() 
+                {
+                    let (subword, submap) = allowed_word;
+                    
+                    let mut subword_vec:Vec<&str> = Vec::with_capacity(word_vec.len() + 1);
+                    subword_vec.clone_from(&word_vec);
+                    subword_vec.push(subword);
+
+                    let summed_map = 
+                        add_charmaps(&word_charmap, &submap);
+                    self.words_to_try.push((subword_vec, summed_map));
+                }
+            }
+        }
+        None
+    }
+}
+
+/// Returns an Iterator over all loose anagrams of `target_word`
 /// 
 /// A loose anagram of a word is a proper anagram that can have a different
 /// number of spaces (i.e. a different number of words).
@@ -53,21 +144,12 @@ fn word_fits(word_map_a: &Charmap, word_map_b: &Charmap) -> bool
 /// loose anagrams may contain the same amount of spaces (i.e. proper anagrams),
 /// fewer spaces, or more spaces.
 /// 
-///# Technical Notes
-/// Loose anagrams are more difficult to find than proper anagrams;
-/// finding them requires a pre-analysis of all words in the wordlist.
-/// Any returned iterator would need to do a significant amount of 
-/// pre-computation before it could return its first value.
-/// Thus, loose anagrams are returned as a `Vec` rather than an iterator
-/// (unlike [find_proper_anagrams])
-pub fn find_loose_anagrams<'a, T>(target_word: &str, wordlist: &'a T) -> Vec<String>
+pub fn find_loose_anagrams<'a, T>(target_word: &str, wordlist: &'a T) -> LooseAnagramsIterator<'a>
 where T: Wordlist<'a>
 {
 
     // get the charcount map of word (ignoring spaces)
     let target_charmap = get_charcount_map(target_word, true);
-    
-    let mut result_vec: Vec<String> = Vec::new();
 
     // find every word in the wordlist that can fit into the base word
     // and store them in full_candidate_set
@@ -87,29 +169,12 @@ where T: Wordlist<'a>
     ).collect();
 
     // hashmap containing the wordset that will fit into the specified charmap
-    let mut candidate_map: HashMap<Charmap, Vec<(&str, &Charmap)>> = HashMap::with_capacity(full_candidate_set.len());
-    for (_, word_map) in full_candidate_set.iter(){
-        let reduced_map =
-        // it is safe to use sub_charmaps here because the word charmap will always fit
-        // within the target charmap; if it didn't, it wouldn't be in words_to_try
-        unsafe {sub_charmaps(&target_charmap, &word_map)};
-
-
-        let allowed_words = full_candidate_set.iter()
-                    .filter_map(|item|{
-                        if word_fits(&reduced_map, &item.1){
-                            Some((*item.0, item.1))
-                        } else {
-                            None
-                        }
-                    }).collect();
-        candidate_map.insert(word_map.clone(), allowed_words);
-    }
+    let candidate_map: HashMap<Charmap, Vec<(&str, Charmap)>> = HashMap::with_capacity(full_candidate_set.len());
 
     // vector containing the words to test fit into target word
     // this is where created words will be stored before verification
     // once verified, they are moved to result_vec
-    let mut words_to_try: Vec<(Vec<&str>, Charmap)>;
+    let words_to_try: Vec<(Vec<&str>, Charmap)>;
     //tuple member 1 is the words that combine to make this word
     //tuple member 2 is the charmap of this word
     //tuple member 3 is the reduced charmap of this word's parent,
@@ -120,67 +185,13 @@ where T: Wordlist<'a>
         (vec![*item.0], item.1.clone())
     }).collect();
 
-    // iterate through words_to_try until it is empty
-    // we can't use iterator because we need to pop each value off individually
-    while let Some((word_vec, word_charmap)) 
-    = words_to_try.pop() {
-
-        if word_charmap == target_charmap{
-            result_vec.push(word_vec.join(" "));
-        } else {
-            
-            let allowed_words = match candidate_map.get(&word_charmap){
-                Some(map) => map,
-                None => {
-                    // this word hasn't had allowed words generated yet
-                    // create allowed words as a subset of parent's allowed words
-
-                    let last_word_charmap = 
-                        full_candidate_set.get(word_vec.last().unwrap()).unwrap();
-                    let parent_charmap = 
-                        unsafe{
-                            sub_charmaps(&word_charmap, last_word_charmap)
-                        };
-                    
-                    let parent_words = 
-                        candidate_map.get(&parent_charmap).unwrap();
-                    
-                    //find reduced map; the map that words must fit into to still fit into
-                    //the target word after 'word' has been included
-                    let reduced_map = 
-                    // it is safe to use sub_charmaps here because the word charmap will always fit
-                    // within the target charmap; if it didn't, it wouldn't be in words_to_try
-                    unsafe {sub_charmaps(&target_charmap, &word_charmap)};
-
-                    let allowed_words = parent_words.iter()
-                    .filter_map(|item|{
-                        if word_fits(&reduced_map, &item.1){
-                            Some(*item)
-                        } else {
-                            None
-                        }
-                    }).collect();
-                    //store allowed words in candidate_map and return ref to newly stored words
-                    candidate_map.entry(word_charmap.clone()).or_insert(allowed_words)
-                }
-            };
-
-            for allowed_word in allowed_words.iter() 
-            {
-                let (subword, submap) = allowed_word;
-                
-                let mut subword_vec:Vec<&str> = Vec::with_capacity(word_vec.len() + 1);
-                subword_vec.clone_from(&word_vec);
-                subword_vec.push(subword);
-
-                let summed_map = 
-                    add_charmaps(&word_charmap, &submap);
-                words_to_try.push((subword_vec, summed_map));
-            }
-        }
+    // create a LooseAnagramsIterator from this data
+    LooseAnagramsIterator{
+        target_charmap,
+        full_candidate_set,
+        candidate_map,
+        words_to_try
     }
-
-    result_vec
 }
 
 /// Adds charmap_a to charmap_b and returns the result

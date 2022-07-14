@@ -47,6 +47,10 @@ fn word_fits(word_map_a: &Charmap, word_map_b: &Charmap) -> bool
 /// An iterator over all the loose anagrams of a word
 /// 
 /// The return value of [find_loose_anagrams]
+/// 
+///# Technical Notes
+/// 
+/// See the Tecnical Notes section of [find_loose_anagrams]
 pub struct LooseAnagramsIterator<'a> {
     target_charmap: Charmap,
     full_candidate_set: HashMap<&'a str, Charmap>,
@@ -140,9 +144,19 @@ impl<'a> Iterator for LooseAnagramsIterator<'a> {
 /// A loose anagram of a word is a proper anagram that can have a different
 /// number of spaces (i.e. a different number of words).
 /// 
-/// `word` may or may not contain spaces; either is permitted. The resulting
+/// `target_word` may or may not contain spaces; either is permitted. The resulting
 /// loose anagrams may contain the same amount of spaces (i.e. proper anagrams),
 /// fewer spaces, or more spaces.
+/// 
+///# Technical notes
+/// 
+/// Loose anagrams take significantly more computational effort to find than proper anagrams.
+/// For this reason, the [LooseAnagramsIterator] caches partial results to decrease time spent waiting
+/// on the next anagram to be generated. This caching behavior results in massive speed gains, but means 
+/// that [LooseAnagramsIterator] instances may take more memory than you might think, especially for larger words.
+/// 
+/// Loose anagrams are also significantly more numerous than proper anagrams. Be mindful of this if you plan to fill
+/// a vector with loose anagrams: storing ***all*** loose anagrams of a word may require multiple gigabytes of memory.
 /// 
 pub fn find_loose_anagrams<'a, T>(target_word: &str, wordlist: &'a T, case_sensitive:bool) 
 -> LooseAnagramsIterator<'a> where T: Wordlist<'a>

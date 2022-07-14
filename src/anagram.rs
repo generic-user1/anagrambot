@@ -66,15 +66,17 @@ fn get_charcount_map(word: &str, ignore_spaces: bool, case_sensitive: bool) -> C
 /// ```
 /// use anagrambot::anagram::are_anagrams;
 /// 
+/// const CASE_SENSITIVE: bool = true;
+/// 
 /// //proper anagram
-/// assert!(are_anagrams("race", "care"));
+/// assert!(are_anagrams("race", "care", CASE_SENSITIVE));
 /// //non-proper anagram
-/// assert!(are_anagrams("aabc", "caab"));
+/// assert!(are_anagrams("aabc", "caab", CASE_SENSITIVE));
 /// 
 /// //non-anagram due to different letters
-/// assert!(!are_anagrams("race", "cow"));
+/// assert!(!are_anagrams("race", "cow", CASE_SENSITIVE));
 /// //non-anagram due to being identical
-/// assert!(!are_anagrams("race", "race"));
+/// assert!(!are_anagrams("race", "race", CASE_SENSITIVE));
 /// ```
 pub fn are_anagrams(word_a: &str, word_b: &str, case_sensitive: bool) -> bool
 {
@@ -104,6 +106,8 @@ pub fn are_anagrams(word_a: &str, word_b: &str, case_sensitive: bool) -> bool
 /// use anagrambot::anagram::are_proper_anagrams;
 /// use anagrambot::wordlist::BorrowedWordList;
 /// 
+/// const CASE_SENSITIVE: bool = true;
+/// 
 /// // you can use anagrambot::default_wordlist::default_wordlist()
 /// // to get the default Wordlist instead of generating your own,
 /// // as long as the `no-default-wordlist` feature is not enabled
@@ -111,14 +115,14 @@ pub fn are_anagrams(word_a: &str, word_b: &str, case_sensitive: bool) -> bool
 /// let wordlist: BorrowedWordList = TEST_WORD_SET.into_iter().collect();
 /// 
 /// //proper anagram
-/// assert!(are_proper_anagrams("race", "care", &wordlist));
+/// assert!(are_proper_anagrams("race", "care", &wordlist, CASE_SENSITIVE));
 /// 
 /// //non-proper anagram
-/// assert!(!are_proper_anagrams("aabc", "caab", &wordlist));
+/// assert!(!are_proper_anagrams("aabc", "caab", &wordlist, CASE_SENSITIVE));
 /// //non-anagram due to different letters
-/// assert!(!are_proper_anagrams("race", "cow", &wordlist));
+/// assert!(!are_proper_anagrams("race", "cow", &wordlist, CASE_SENSITIVE));
 /// //non-anagram due to being identical
-/// assert!(!are_proper_anagrams("race", "race", &wordlist));
+/// assert!(!are_proper_anagrams("race", "race", &wordlist, CASE_SENSITIVE));
 /// ```
 pub fn are_proper_anagrams<'a>(word_a: &str, word_b: &str, wordlist: &impl Wordlist<'a>, 
     case_sensitive: bool) -> bool

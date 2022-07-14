@@ -6,42 +6,73 @@
 use super::{Charmap, Wordlist, get_charcount_map};
 use std::collections::HashMap;
 
-/// Given the charcount map of word a and the charcount map of word b,
-/// checks if word b would fit into word_a (i.e. that map b only has keys
-/// that map a also has, and that the quantities of each key in word b are
-/// less than or equal to the quantities in word a)
+/// Returns an Iterator over all loose anagrams of `target_word`
 /// 
-/// returns true if word_b would fit into word_a
-fn word_fits(word_map_a: &Charmap, word_map_b: &Charmap) -> bool
+/// A loose anagram of a word is a proper anagram that can have a different
+/// number of spaces (i.e. a different number of words).
+/// 
+/// `target_word` may or may not contain spaces; either is permitted. The resulting
+/// loose anagrams may contain the same amount of spaces (i.e. proper anagrams),
+/// fewer spaces, or more spaces.
+/// 
+///# Technical notes
+/// 
+/// Loose anagrams take significantly more computational effort to find than proper anagrams.
+/// For this reason, the [LooseAnagramsIterator] caches partial results to decrease time spent waiting
+/// on the next anagram to be generated. This caching behavior results in massive speed gains, but means 
+/// that [LooseAnagramsIterator] instances may take more memory than you might think, especially for larger words.
+/// 
+/// Loose anagrams are also significantly more numerous than proper anagrams. Be mindful of this if you plan to fill
+/// a vector with loose anagrams: storing ***all*** loose anagrams of a word may require multiple gigabytes of memory.
+/// 
+pub fn find_loose_anagrams<'a, T>(target_word: &str, wordlist: &'a T, case_sensitive:bool) 
+-> LooseAnagramsIterator<'a> where T: Wordlist<'a>
 {
-    // if word map b has more keys than word map a, it cannot fit within word a
-    if word_map_b.keys().len() > word_map_a.keys().len(){
-        return false;
-    }
 
-    // iterate through map b's keys
-    for map_b_key in word_map_b.keys() {
-        // try to get this key in map a
-        match word_map_a.get(map_b_key){
-            // return false if this key does not exist in map a
-            None => return false,
-            Some(word_a_value) => {
-                // check that word b's value for this key
-                // is less than or equal to word a's value for the key
-                // we can safely unwrap this because the key was retrived from word map b,
-                // so it definitely exists
-                let word_b_value = word_map_b.get(map_b_key).unwrap();
-                if word_b_value > word_a_value {
-                    return false;
+    // get the charcount map of word (ignoring spaces)
+    let target_charmap = get_charcount_map(target_word, true, case_sensitive);
+
+    // find every word in the wordlist that can fit into the base word
+    // and store them in full_candidate_set
+    let full_candidate_set: HashMap<&str, Charmap> = wordlist.iter().filter_map(|word_b|{
+            let charcount_map = get_charcount_map(word_b, true, case_sensitive);
+            if word_fits(&target_charmap, &charcount_map){
+                //dont include word if it's the same word
+                if target_word == word_b{
+                    None
+                } else {
+                    Some((word_b, charcount_map))
                 }
+            } else {
+                None
             }
-
         }
+    ).collect();
+
+    // hashmap containing the wordset that will fit into the specified charmap
+    let candidate_map: HashMap<Charmap, Vec<(&str, Charmap)>> = HashMap::with_capacity(full_candidate_set.len());
+
+    // vector containing the words to test fit into target word
+    // this is where created words will be stored before verification
+    // once verified, they are moved to result_vec
+    let words_to_try: Vec<(Vec<&str>, Charmap)>;
+    //tuple member 1 is the words that combine to make this word
+    //tuple member 2 is the charmap of this word
+    //tuple member 3 is the reduced charmap of this word's parent,
+    //which was used to find this word
+
+    // initially fill words_to_try with the candidate set
+    words_to_try = full_candidate_set.iter().map(|item|{
+        (vec![*item.0], item.1.clone())
+    }).collect();
+
+    // create a LooseAnagramsIterator from this data
+    LooseAnagramsIterator{
+        target_charmap,
+        full_candidate_set,
+        candidate_map,
+        words_to_try
     }
-    // if all keys in word b exist in word a,
-    // and the word a amount for each key meets or exceeds
-    // the word b amount, word b must fit into word a
-    true
 }
 
 /// An iterator over all the loose anagrams of a word
@@ -139,73 +170,42 @@ impl<'a> Iterator for LooseAnagramsIterator<'a> {
     }
 }
 
-/// Returns an Iterator over all loose anagrams of `target_word`
+/// Given the charcount map of word a and the charcount map of word b,
+/// checks if word b would fit into word_a (i.e. that map b only has keys
+/// that map a also has, and that the quantities of each key in word b are
+/// less than or equal to the quantities in word a)
 /// 
-/// A loose anagram of a word is a proper anagram that can have a different
-/// number of spaces (i.e. a different number of words).
-/// 
-/// `target_word` may or may not contain spaces; either is permitted. The resulting
-/// loose anagrams may contain the same amount of spaces (i.e. proper anagrams),
-/// fewer spaces, or more spaces.
-/// 
-///# Technical notes
-/// 
-/// Loose anagrams take significantly more computational effort to find than proper anagrams.
-/// For this reason, the [LooseAnagramsIterator] caches partial results to decrease time spent waiting
-/// on the next anagram to be generated. This caching behavior results in massive speed gains, but means 
-/// that [LooseAnagramsIterator] instances may take more memory than you might think, especially for larger words.
-/// 
-/// Loose anagrams are also significantly more numerous than proper anagrams. Be mindful of this if you plan to fill
-/// a vector with loose anagrams: storing ***all*** loose anagrams of a word may require multiple gigabytes of memory.
-/// 
-pub fn find_loose_anagrams<'a, T>(target_word: &str, wordlist: &'a T, case_sensitive:bool) 
--> LooseAnagramsIterator<'a> where T: Wordlist<'a>
+/// returns true if word_b would fit into word_a
+fn word_fits(word_map_a: &Charmap, word_map_b: &Charmap) -> bool
 {
-
-    // get the charcount map of word (ignoring spaces)
-    let target_charmap = get_charcount_map(target_word, true, case_sensitive);
-
-    // find every word in the wordlist that can fit into the base word
-    // and store them in full_candidate_set
-    let full_candidate_set: HashMap<&str, Charmap> = wordlist.iter().filter_map(|word_b|{
-            let charcount_map = get_charcount_map(word_b, true, case_sensitive);
-            if word_fits(&target_charmap, &charcount_map){
-                //dont include word if it's the same word
-                if target_word == word_b{
-                    None
-                } else {
-                    Some((word_b, charcount_map))
-                }
-            } else {
-                None
-            }
-        }
-    ).collect();
-
-    // hashmap containing the wordset that will fit into the specified charmap
-    let candidate_map: HashMap<Charmap, Vec<(&str, Charmap)>> = HashMap::with_capacity(full_candidate_set.len());
-
-    // vector containing the words to test fit into target word
-    // this is where created words will be stored before verification
-    // once verified, they are moved to result_vec
-    let words_to_try: Vec<(Vec<&str>, Charmap)>;
-    //tuple member 1 is the words that combine to make this word
-    //tuple member 2 is the charmap of this word
-    //tuple member 3 is the reduced charmap of this word's parent,
-    //which was used to find this word
-
-    // initially fill words_to_try with the candidate set
-    words_to_try = full_candidate_set.iter().map(|item|{
-        (vec![*item.0], item.1.clone())
-    }).collect();
-
-    // create a LooseAnagramsIterator from this data
-    LooseAnagramsIterator{
-        target_charmap,
-        full_candidate_set,
-        candidate_map,
-        words_to_try
+    // if word map b has more keys than word map a, it cannot fit within word a
+    if word_map_b.keys().len() > word_map_a.keys().len(){
+        return false;
     }
+
+    // iterate through map b's keys
+    for map_b_key in word_map_b.keys() {
+        // try to get this key in map a
+        match word_map_a.get(map_b_key){
+            // return false if this key does not exist in map a
+            None => return false,
+            Some(word_a_value) => {
+                // check that word b's value for this key
+                // is less than or equal to word a's value for the key
+                // we can safely unwrap this because the key was retrived from word map b,
+                // so it definitely exists
+                let word_b_value = word_map_b.get(map_b_key).unwrap();
+                if word_b_value > word_a_value {
+                    return false;
+                }
+            }
+
+        }
+    }
+    // if all keys in word b exist in word a,
+    // and the word a amount for each key meets or exceeds
+    // the word b amount, word b must fit into word a
+    true
 }
 
 /// Adds charmap_a to charmap_b and returns the result

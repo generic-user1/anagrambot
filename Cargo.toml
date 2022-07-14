@@ -15,4 +15,10 @@ edition = "2021"
 # Don't build a wordlist into the library and require an external wordlist file
 no-default-wordlist = []
 
+# a release build with debug info
+# useful for profiling (for example, with heaptrack)
+[profile.release-with-debug]
+inherits = "release"
+debug = true
+
 [dependencies]

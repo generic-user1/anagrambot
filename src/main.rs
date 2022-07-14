@@ -5,6 +5,7 @@ use anagrambot::anagram;
 use std::time;
 
 const PRINT_RESULTS: bool = false;
+const CASE_SENSITIVE: bool = true;
 
 fn main() {
 
@@ -20,7 +21,7 @@ fn main() {
     
     let start_time = time::Instant::now();
 
-    let loose_anagrams = anagram::find_loose_anagrams(target_word, &wordlist);
+    let loose_anagrams = anagram::find_loose_anagrams(target_word, &wordlist, CASE_SENSITIVE);
 
     let mut anagram_count: usize = 0;
     for loose_anagram in loose_anagrams{

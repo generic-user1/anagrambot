@@ -32,7 +32,10 @@ pub use loose_anagram::find_loose_anagrams;
 /// being the number of times that character appears in `word`
 /// 
 /// If `ignore_spaces` is true, space characters `' '` will be entirely skipped over
-fn get_charcount_map(word: &str, ignore_spaces: bool) -> Charmap
+/// 
+/// If `case_sensitive` is true, characters of different case will be treated as different.
+/// If `case_sensitive` is false, characters of different case will be treated as the same.
+fn get_charcount_map(word: &str, ignore_spaces: bool, case_sensitive: bool) -> Charmap
 {
     let mut lettercount_map = Charmap::new();
 
@@ -40,6 +43,7 @@ fn get_charcount_map(word: &str, ignore_spaces: bool) -> Charmap
         if ignore_spaces && letter == ' '{
             continue;
         } else {
+            let letter = if case_sensitive {letter} else {letter.to_ascii_lowercase()};
             match lettercount_map.get_mut(&letter) {
                 None => {lettercount_map.insert(letter, 1);},
                 Some(count) => {*count+=1}
@@ -72,7 +76,7 @@ fn get_charcount_map(word: &str, ignore_spaces: bool) -> Charmap
 /// //non-anagram due to being identical
 /// assert!(!are_anagrams("race", "race"));
 /// ```
-pub fn are_anagrams(word_a: &str, word_b: &str) -> bool
+pub fn are_anagrams(word_a: &str, word_b: &str, case_sensitive: bool) -> bool
 {
     //words can't be anagrams if their lengths are different
     if word_a.len() != word_b.len(){
@@ -84,7 +88,8 @@ pub fn are_anagrams(word_a: &str, word_b: &str) -> bool
 
     //words are anagrams if both previous conditions weren't true
     //and the counts of each of their letters are identical
-    get_charcount_map(word_a, false) == get_charcount_map(word_b, false)
+    get_charcount_map(word_a, false, case_sensitive) 
+        == get_charcount_map(word_b, false, case_sensitive)
 }
 
 /// Similar to [are_anagrams] but checks that both words are real words
@@ -115,7 +120,8 @@ pub fn are_anagrams(word_a: &str, word_b: &str) -> bool
 /// //non-anagram due to being identical
 /// assert!(!are_proper_anagrams("race", "race", &wordlist));
 /// ```
-pub fn are_proper_anagrams<'a>(word_a: &str, word_b: &str, wordlist: &impl Wordlist<'a>) -> bool
+pub fn are_proper_anagrams<'a>(word_a: &str, word_b: &str, wordlist: &impl Wordlist<'a>, 
+    case_sensitive: bool) -> bool
 {
     //return false if either word is not found in wordlist
     if !wordlist.includes_word(word_a){
@@ -125,7 +131,7 @@ pub fn are_proper_anagrams<'a>(word_a: &str, word_b: &str, wordlist: &impl Wordl
     }
 
     //now that we ensured both words are real words, use the standard are_anagrams function
-    are_anagrams(word_a, word_b)
+    are_anagrams(word_a, word_b, case_sensitive)
 }
 
 
@@ -141,7 +147,8 @@ pub struct ProperAnagramsIter<'a, T>
 where T: Iterator<Item = &'a str>
 {
     word: &'a str,
-    wordlist_iter: T
+    wordlist_iter: T,
+    case_sensitive: bool
 }
 
 impl<'a, T> Iterator for ProperAnagramsIter<'a, T>
@@ -150,7 +157,7 @@ where T: Iterator<Item = &'a str>
     type Item = &'a str;
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(next_word) = self.wordlist_iter.next() {
-            if are_anagrams(self.word, next_word){
+            if are_anagrams(self.word, next_word, self.case_sensitive){
                 return Some(next_word);
             }
         }
@@ -163,9 +170,9 @@ where T: Iterator<Item = &'a str>
 /// 
 /// Note that this method does not check if `word` is present in `wordlist`;
 /// this is the responsibility of the caller (if desired)
-pub fn find_proper_anagrams<'a, T>(word: &'a str, wordlist: &'a T)
+pub fn find_proper_anagrams<'a, T>(word: &'a str, wordlist: &'a T, case_sensitive: bool)
  -> ProperAnagramsIter<'a, impl Iterator<Item = &'a str>>
 where T: Wordlist<'a>
 {
-    ProperAnagramsIter { word, wordlist_iter: wordlist.iter()}
+    ProperAnagramsIter { word, wordlist_iter: wordlist.iter(), case_sensitive}
 }

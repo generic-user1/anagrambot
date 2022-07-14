@@ -144,17 +144,17 @@ impl<'a> Iterator for LooseAnagramsIterator<'a> {
 /// loose anagrams may contain the same amount of spaces (i.e. proper anagrams),
 /// fewer spaces, or more spaces.
 /// 
-pub fn find_loose_anagrams<'a, T>(target_word: &str, wordlist: &'a T) -> LooseAnagramsIterator<'a>
-where T: Wordlist<'a>
+pub fn find_loose_anagrams<'a, T>(target_word: &str, wordlist: &'a T, case_sensitive:bool) 
+-> LooseAnagramsIterator<'a> where T: Wordlist<'a>
 {
 
     // get the charcount map of word (ignoring spaces)
-    let target_charmap = get_charcount_map(target_word, true);
+    let target_charmap = get_charcount_map(target_word, true, case_sensitive);
 
     // find every word in the wordlist that can fit into the base word
     // and store them in full_candidate_set
     let full_candidate_set: HashMap<&str, Charmap> = wordlist.iter().filter_map(|word_b|{
-            let charcount_map = get_charcount_map(word_b, true);
+            let charcount_map = get_charcount_map(word_b, true, case_sensitive);
             if word_fits(&target_charmap, &charcount_map){
                 //dont include word if it's the same word
                 if target_word == word_b{

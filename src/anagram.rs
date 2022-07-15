@@ -18,7 +18,7 @@
 //! - "race" and "care" are proper anagrams because they are anagrams and both words
 //! - "race" and "reca" are not proper anagrams because "reca" is not a word
 
-use crate::wordlist::{Wordlist};
+use crate::wordlist::Wordlist;
 
 use std::collections::BTreeMap;
 

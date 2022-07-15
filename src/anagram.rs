@@ -44,14 +44,23 @@ fn get_charcount_map(word: &str, ignore_spaces: bool, case_sensitive: bool) -> C
 {
     let mut lettercount_map = Charmap::new();
 
+    let mut insert_closure = |letter|{
+        match lettercount_map.get_mut(&letter) {
+        None => {lettercount_map.insert(letter, 1);},
+        Some(count) => {*count+=1}
+        }
+    };
+
     for letter in word.chars(){
         if ignore_spaces && letter == ' '{
             continue;
         } else {
-            let letter = if case_sensitive {letter} else {letter.to_ascii_lowercase()};
-            match lettercount_map.get_mut(&letter) {
-                None => {lettercount_map.insert(letter, 1);},
-                Some(count) => {*count+=1}
+            if case_sensitive{
+                insert_closure(letter);
+            } else {
+                for lower_letter in letter.to_lowercase(){
+                    insert_closure(lower_letter);
+                }
             }
         }
     }

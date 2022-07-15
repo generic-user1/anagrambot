@@ -1,32 +1,12 @@
-[package]
-name = "anagrambot"
-authors = ["generic-user1"]
-description = "A library and CLI tool to find anagrams of words"
-license-file = "LICENSE"
-readme = "README.md"
-repository = "https://github.com/generic-user1/anagrambot"
-keywords = ["anagram", "anagrams"]
-categories = ["command-line-utilities"]
-version = "0.1.0"
-edition = "2021"
+[workspace]
 
-[features]
-
-# Don't build a wordlist into the library and require an external wordlist file
-no-default-wordlist = []
-
-default = ["clap"]
+members = [
+    "anagrambot",
+    "anagrambot_cli"
+]
 
 # a release build with debug info
 # useful for profiling (for example, with heaptrack)
 [profile.release-with-debug]
 inherits = "release"
 debug = true
-
-[dependencies]
-
-clap = {version = "3.2.12", optional = true, features = ["derive"]}
-
-[[bin]]
-name = "anagrambot"
-required-features = ["clap"]

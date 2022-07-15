@@ -25,7 +25,7 @@ pub const fn default_wordlist_content() -> Option<&'static str>
     return None;
 
     #[cfg(not(feature = "no-default-wordlist"))]
-    return Some(include_str!("../words.txt"));
+    return Some(include_str!("../../words.txt"));
 }
 
 /// Returns the default wordlist as a BorrowedWordlist

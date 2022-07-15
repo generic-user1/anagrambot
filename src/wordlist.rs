@@ -1,5 +1,7 @@
 //! The `Wordlist` trait and some implementations
 
+use std::{io::{self, BufReader, BufRead}, fs, path::Path};
+
 /// A list of words
 /// 
 /// A `Wordlist` is a list of words (each word being a `&str`).
@@ -95,6 +97,26 @@ impl OwnedWordList{
     {
         Self{word_vec: word_iter.into_iter().collect()}
     }
+
+    /// Construct a new `OwnedWordList` from the contents of a text file
+    ///
+    /// `word_file` must be a [Path] to a text file containing words.
+    ///  
+    /// Each line of the text file is considered a single word.
+    pub fn from_file(word_file: &Path) -> io::Result<Self>
+    {
+        let word_file = fs::File::open(word_file)?;
+
+        let mut word_vec: Vec<String> = Vec::new();
+
+        let lines_iter = BufReader::new(word_file).lines();
+
+        for line in lines_iter {
+            word_vec.push(line?);
+        }
+
+        Ok(Self::new(word_vec))
+    }
 }
 
 impl FromIterator<String> for OwnedWordList{
@@ -121,6 +143,8 @@ impl<'a> Wordlist<'a> for OwnedWordList{
 #[cfg(test)]
 mod ownedwordlist_tests{
     use super::{OwnedWordList, Wordlist};
+    use crate::default_wordlist::default_wordlist;
+    use std::path::Path;
 
     #[test]
     fn test_includes_word()
@@ -150,6 +174,23 @@ mod ownedwordlist_tests{
 
         for (first, second) in iter::zip(first_iter, second_iter){
             assert_eq!(first, second);
+        }
+    }
+
+    
+    #[test]
+    fn test_default_vs_file(){
+
+        let default_wordlist = match default_wordlist(){
+            Some(wordlist) => wordlist,
+            None => {return;} //end test if default wordlist isn't present
+        };
+
+        let wordlist_from_file = 
+            OwnedWordList::from_file(Path::new("words.txt")).unwrap();
+
+        for (defword, ownedword) in default_wordlist.iter().zip(wordlist_from_file.iter()){
+            assert_eq!(defword, ownedword);
         }
     }
 }

@@ -6,6 +6,51 @@
 use super::{Charmap, Wordlist, get_charcount_map};
 use std::collections::HashMap;
 
+/// Similar to [are_anagrams](super::are_anagrams) but checks for loose anagrams 
+/// 
+/// This function will return true if both `word_a` and `word_b` have the same characters
+/// in the same amount, regardless of spaces. Typically loose anagrams are only made up
+/// of real words (like proper anagrams), but for greater versatility, this function
+/// leaves that check as a responsibility of the caller (if desired).
+/// 
+/// For example:
+/// 
+/// - "racecar" and "arc care" are loose anagrams
+/// - "racecar" and "race car" are loose anagrams
+/// - "racecar" and "rac e car" are not strictly loose anagrams because "rac" and "e" aren't
+///    words, but this function will return `true` for "racecar" and "rac e car" despite this
+/// 
+///# Examples
+/// ```
+/// use anagrambot::anagram::are_loose_anagrams;
+/// 
+/// const CASE_SENSITIVE: bool = true;
+/// 
+/// //loose anagrams
+/// assert!(are_loose_anagrams("racecar", "arc care", CASE_SENSITIVE));
+/// assert!(are_loose_anagrams("race car", "car race", CASE_SENSITIVE));
+/// 
+/// //proper anagram
+/// assert!(are_loose_anagrams("race", "care", CASE_SENSITIVE));
+/// //non-proper anagram will still result in true from this function
+/// assert!(are_loose_anagrams("aabc", "caab", CASE_SENSITIVE));
+/// 
+/// //non-anagram due to different letters
+/// assert!(!are_loose_anagrams("race", "cow", CASE_SENSITIVE));
+/// //non-anagram due to being identical
+/// assert!(!are_loose_anagrams("race", "race", CASE_SENSITIVE));
+/// ```
+pub fn are_loose_anagrams<'a>(word_a: &str, word_b: &str, case_sensitive: bool) -> bool
+{
+    if word_a == word_b{
+        return false;
+    }
+    let charmap_a = get_charcount_map(word_a, true, case_sensitive);
+    let charmap_b = get_charcount_map(word_b, true, case_sensitive);
+    charmap_a == charmap_b
+}
+
+
 /// Returns an Iterator over all loose anagrams of `target_word`
 /// 
 /// A loose anagram of a word is a proper anagram that can have a different

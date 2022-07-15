@@ -29,7 +29,7 @@ use std::collections::BTreeMap;
 type Charmap = BTreeMap<char, u32>;
 
 pub mod loose_anagram;
-pub use loose_anagram::find_loose_anagrams;
+pub use loose_anagram::{are_loose_anagrams, find_loose_anagrams};
 
 /// Returns a [Charmap] with the number of times each character appears in `word`
 /// 

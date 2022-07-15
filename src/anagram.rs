@@ -21,14 +21,19 @@
 use crate::wordlist::{Wordlist};
 
 use std::collections::BTreeMap;
+
+/// Type representing the set of characters a word contains
+/// 
+/// Each key is a character that appears in the word. Each value
+/// is the number of times that character appears
 type Charmap = BTreeMap<char, u32>;
 
 pub mod loose_anagram;
 pub use loose_anagram::find_loose_anagrams;
 
-/// Returns a [HashMap] with the number of times each character appears in `word`
+/// Returns a [Charmap] with the number of times each character appears in `word`
 /// 
-/// The resulting [HashMap] has a key for each character in `word`, with the value
+/// The resulting [Charmap] has a key for each character in `word`, with the value
 /// being the number of times that character appears in `word`
 /// 
 /// If `ignore_spaces` is true, space characters `' '` will be entirely skipped over
@@ -54,7 +59,13 @@ fn get_charcount_map(word: &str, ignore_spaces: bool, case_sensitive: bool) -> C
     lettercount_map
 }
 
-/// Returns true if `word_a` and `word_b` are anagrams
+/// Returns true if two words are anagrams
+/// 
+/// `word_a` and `word_b` are the two words to check
+/// 
+/// If `case_sensitive` is `true`, uppercase and lowercase forms of the
+/// same letter will be considered different. If `case_sensitive` is `false`,
+/// uppercase and lowercase forms of th same letter will be considered the same.
 /// 
 /// This tests for standard anagrams, not proper anagrams. This means
 /// that non-word character sequences that nonetheless contain the same
@@ -101,7 +112,7 @@ pub fn are_anagrams(word_a: &str, word_b: &str, case_sensitive: bool) -> bool
 /// 
 /// `wordlist` must implement the [Wordlist] trait (for example, the 
 /// [default wordlist](crate::default_wordlist::default_wordlist) if present)
-/// ///# Examples
+///# Examples
 /// ```
 /// use anagrambot::anagram::are_proper_anagrams;
 /// use anagrambot::wordlist::BorrowedWordList;
@@ -174,6 +185,29 @@ where T: Iterator<Item = &'a str>
 /// 
 /// Note that this method does not check if `word` is present in `wordlist`;
 /// this is the responsibility of the caller (if desired)
+/// 
+///# Examples
+/// ```
+/// use anagrambot::anagram::find_proper_anagrams;
+/// use anagrambot::wordlist::BorrowedWordList; 
+/// 
+/// const CASE_SENSITIVE: bool = true;
+/// 
+/// // you can use anagrambot::default_wordlist::default_wordlist()
+/// // to get the default Wordlist instead of generating your own,
+/// // as long as the `no-default-wordlist` feature is not enabled
+/// const TEST_WORD_SET: [&str; 5] = ["aster", "taser", "tears", "race", "cow"];
+/// let wordlist: BorrowedWordList = TEST_WORD_SET.into_iter().collect();
+/// 
+/// let mut proper_anagrams = find_proper_anagrams("tears", &wordlist, CASE_SENSITIVE);
+/// 
+/// assert_eq!(proper_anagrams.next(), Some("aster"));
+/// assert_eq!(proper_anagrams.next(), Some("taser"));
+/// assert_eq!(proper_anagrams.next(), None);
+/// 
+/// // note that the original word "tears" is not included because
+/// // two identical words are not considered anagrams
+/// ```
 pub fn find_proper_anagrams<'a, T>(word: &'a str, wordlist: &'a T, case_sensitive: bool)
  -> ProperAnagramsIter<'a, impl Iterator<Item = &'a str>>
 where T: Wordlist<'a>

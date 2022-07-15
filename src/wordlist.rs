@@ -1,4 +1,4 @@
-//! The `Wordlist` Trait and some implementations
+//! The `Wordlist` trait and some implementations
 
 /// A list of words
 /// 
@@ -12,7 +12,7 @@ pub trait Wordlist<'a>
 
     /// Returns an an iterator that returns all words
     /// 
-    /// Unlike the IntoIterator trait, does not consume the Wordlist
+    /// Unlike the IntoIterator trait, does not consume the `Wordlist`
     fn iter(&'a self) -> Self::IterType;
 
     /// Given a word, returns true if the word is contained within this `Wordlist`
@@ -28,7 +28,7 @@ pub struct BorrowedWordList<'a> {
 }
 
 impl<'a> BorrowedWordList<'a> {
-    /// Construct a new StrWordList from an iterator of `&str`
+    /// Construct a new `BorrowedWordList` from an iterator of `&str`
     pub fn new(word_iter: impl IntoIterator<Item = &'a str>) -> Self
     {
         Self { word_vec: word_iter.into_iter().collect() }

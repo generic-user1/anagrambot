@@ -1,7 +1,7 @@
-//! Utilities for loose_anagrams
+//! Utilities for loose anagrams
 //! 
 //! A loose anagram of a word is a proper anagram that can have a different
-/// number of spaces (i.e. a different number of words).
+//! number of spaces (i.e. a different number of words).
 
 use super::{Charmap, Wordlist, get_charcount_map};
 use std::collections::HashMap;
@@ -17,6 +17,8 @@ use std::collections::HashMap;
 /// 
 ///# Technical notes
 /// 
+/// The [LooseAnagramsIterator] returns values in an unpredictable order. 
+/// 
 /// Loose anagrams take significantly more computational effort to find than proper anagrams.
 /// For this reason, the [LooseAnagramsIterator] caches partial results to decrease time spent waiting
 /// on the next anagram to be generated. This caching behavior results in massive speed gains, but means 
@@ -25,6 +27,33 @@ use std::collections::HashMap;
 /// Loose anagrams are also significantly more numerous than proper anagrams. Be mindful of this if you plan to fill
 /// a vector with loose anagrams: storing ***all*** loose anagrams of a word may require multiple gigabytes of memory.
 /// 
+///# Examples
+/// ```
+/// use anagrambot::anagram::find_loose_anagrams;
+/// use anagrambot::wordlist::BorrowedWordList;
+/// 
+/// const CASE_SENSITIVE: bool = true;
+/// 
+/// // you can use anagrambot::default_wordlist::default_wordlist()
+/// // to get the default Wordlist instead of generating your own,
+/// // as long as the `no-default-wordlist` feature is not enabled
+/// const TEST_WORD_SET: [&str; 5] = ["race", "car", "care", "racecar", "acre"];
+/// let wordlist: BorrowedWordList = TEST_WORD_SET.into_iter().collect();
+/// 
+/// let loose_anagrams_iter = find_loose_anagrams("racecar", &wordlist, CASE_SENSITIVE);
+/// 
+/// // The loose anagrams iterator will return its results in an unpredictable order.
+/// // If you need the results in a predictable order, you will need to collect them
+/// // into a container and then sort them. However, keep in mind that collecting
+/// // all loose anagrams may take a lot of time and memory, especially for large words.
+/// 
+/// // With this small wordlist however, collecting and sorting is reasonably fast.
+/// let mut loose_anagrams_vec: Vec<String> = loose_anagrams_iter.collect();
+/// loose_anagrams_vec.sort();
+/// 
+/// assert_eq!(loose_anagrams_vec, 
+///     vec!["acre car", "car acre", "car care", "car race", "care car", "race car"]);
+/// ```
 pub fn find_loose_anagrams<'a, T>(target_word: &str, wordlist: &'a T, case_sensitive:bool) 
 -> LooseAnagramsIterator<'a> where T: Wordlist<'a>
 {

@@ -15,6 +15,8 @@ edition = "2021"
 # Don't build a wordlist into the library and require an external wordlist file
 no-default-wordlist = []
 
+default = ["clap"]
+
 # a release build with debug info
 # useful for profiling (for example, with heaptrack)
 [profile.release-with-debug]
@@ -22,3 +24,9 @@ inherits = "release"
 debug = true
 
 [dependencies]
+
+clap = {version = "3.2.12", optional = true, features = ["derive"]}
+
+[[bin]]
+name = "anagrambot"
+required-features = ["clap"]

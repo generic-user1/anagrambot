@@ -7,6 +7,14 @@ A library and CLI tool to find anagrams of words. Written in Rust.
 
 - `no-default-wordlist`: Do not include the default wordlist when building the project.
 
+## CLI Tool Dependencies
+
+- [clap](https://github.com/clap-rs/clap) for command line argument parsing
+
+## Library Dependencies
+
+None
+
 ## License Note
 
 This project ships with an in-built list of words (henceforth referred to as 'the wordlist'). 

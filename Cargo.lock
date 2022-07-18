@@ -3,16 +3,16 @@
 version = 3
 
 [[package]]
-name = "anagrambot"
-version = "0.1.0"
-
-[[package]]
-name = "anagrambot_cli"
+name = "anabot"
 version = "0.1.0"
 dependencies = [
  "anagrambot",
  "clap",
 ]
+
+[[package]]
+name = "anagrambot"
+version = "0.1.0"
 
 [[package]]
 name = "atty"

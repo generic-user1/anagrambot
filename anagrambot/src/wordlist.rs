@@ -187,7 +187,7 @@ mod ownedwordlist_tests{
         };
 
         let wordlist_from_file = 
-            OwnedWordList::from_file(Path::new("../words.txt")).unwrap();
+            OwnedWordList::from_file(Path::new("words.txt")).unwrap();
 
         for (defword, ownedword) in default_wordlist.iter().zip(wordlist_from_file.iter()){
             assert_eq!(defword, ownedword);

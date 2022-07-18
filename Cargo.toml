@@ -2,7 +2,7 @@
 
 members = [
     "anagrambot",
-    "anagrambot_cli"
+    "anabot"
 ]
 
 # a release build with debug info

@@ -1,0 +1,17 @@
+[package]
+name = "anabot"
+authors = ["generic-user1"]
+description = "A CLI tool to find anagrams of words; front-end to anagrambot"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/generic-user1/anagrambot"
+keywords = ["anagram", "anagrams", "anagrambot"]
+categories = ["command-line-utilities", "text-processing"]
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+anagrambot = {path = "../anagrambot", version = "0.1.0"}
+
+clap = {version = "3.2.12", features = ["derive"]}

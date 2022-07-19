@@ -40,7 +40,7 @@ pub struct CliArgs {
     /// `loose`: word A and word B are proper anagrams but may have a different number of
     /// spaces. For example, "racecar" and "arc care" are loose anagrams but not proper anagrams
     /// (requires a word list)
-    #[clap(long, short = 't', arg_enum, value_parser, default_value_t = AnagramType::Standard)]
+    #[clap(long, short = 't', arg_enum, value_parser, default_value_t = AnagramType::Proper)]
     pub anagram_type: AnagramType,
 
     /// Path to a word list file

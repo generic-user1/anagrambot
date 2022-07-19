@@ -40,7 +40,7 @@ use std::collections::HashMap;
 /// //non-anagram due to being identical
 /// assert!(!are_loose_anagrams("race", "race", CASE_SENSITIVE));
 /// ```
-pub fn are_loose_anagrams<'a>(word_a: &str, word_b: &str, case_sensitive: bool) -> bool
+pub fn are_loose_anagrams(word_a: &str, word_b: &str, case_sensitive: bool) -> bool
 {
     if word_a == word_b{
         return false;
@@ -48,6 +48,26 @@ pub fn are_loose_anagrams<'a>(word_a: &str, word_b: &str, case_sensitive: bool) 
     let charmap_a = get_charcount_map(word_a, true, case_sensitive);
     let charmap_b = get_charcount_map(word_b, true, case_sensitive);
     charmap_a == charmap_b
+}
+
+/// Similar to [are_loose_anagrams] but checks that both words are real words
+/// 
+/// This function checks both `word_a` and `word_b` for presence in `wordlist`.
+/// If either of them is not found within `wordlist`, this function will return false.
+/// 
+/// If both `word_a` and `word_b` are present in `wordlist`, this function's return value
+/// will be identical to that of [are_loose_anagrams] for the given `word_a` and `word_b`.
+pub fn are_loose_anagrams_strict<'a>(
+     word_a: &str, 
+     word_b: &str,
+     wordlist: &impl Wordlist<'a>, 
+     case_sensitive: bool) -> bool
+{
+    if wordlist.includes_word(word_a) && wordlist.includes_word(word_b){
+        are_loose_anagrams(word_a, word_b, case_sensitive)
+    } else {
+        false
+    }
 }
 
 

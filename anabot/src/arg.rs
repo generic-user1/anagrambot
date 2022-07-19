@@ -8,7 +8,7 @@ pub enum AnagramType {
 }
 
 #[derive(Debug, PartialEq, Subcommand)]
-pub enum Action {
+pub enum ActionType {
     /// Test if two words are anagrams
     Test {
         word_a: String, 
@@ -55,6 +55,6 @@ pub struct CliArgs {
     pub simple_output: bool,
 
     #[clap(subcommand)]
-    pub action: Action
+    pub action: ActionType
 
 }

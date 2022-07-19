@@ -4,7 +4,7 @@ use clap::Parser;
 use std::path::Path;
 
 mod arg;
-use arg::*;
+use arg::{CliArgs, AnagramType, ActionType};
 
 const REASON_DUPLICATES: &str = "a word cannot be an anagram of itself";
 const REASON_FIRST_NOT_WORD: &str = "first provided word is not a valid word";
@@ -14,14 +14,21 @@ const REASON_CHARS_DIFFERENT: &str = "words do not contain the same characters i
 
 fn main() -> Result<(), String> {
     let args = CliArgs::parse();
+    handle_args(args)
+}
 
+/// main arg handling function
+/// 
+/// includes full handling for standard anagrams and delegates other types of anagrams to do_action
+fn handle_args(args: CliArgs) -> Result<(), String>
+{
     // handle Standard first, as it requires no wordlist and thus no wordlist handling
     if &args.anagram_type == &AnagramType::Standard {
         match &args.action {
-            Action::Find{..} => {
+            ActionType::Find{..} => {
                 return Err("No `find` method for standard anagrams (yet)!".to_string())
             },
-            Action::Test {word_a, word_b } => {
+            ActionType::Test {word_a, word_b } => {
                 if anagram::are_anagrams(word_a, word_b, !args.case_insensitive){
                     if args.simple_output {
                         println!("true")
@@ -88,7 +95,7 @@ fn do_action<'a>(args: &CliArgs, wordlist: &'a impl Wordlist<'a>)
     
     let case_sensitive = !args.case_insensitive;
     match &args.action {
-        Action::Test {word_a, word_b } => {
+        ActionType::Test {word_a, word_b } => {
             let (are_anagrams, anagram_name) = match &args.anagram_type {
                 AnagramType::Standard => panic!("{}", PANIC_MSG),
                 AnagramType::Proper => {
@@ -132,7 +139,7 @@ fn do_action<'a>(args: &CliArgs, wordlist: &'a impl Wordlist<'a>)
                 }
             }
         },
-        Action::Find { word, limit } => {
+        ActionType::Find { word, limit } => {
             fn print_fn<'c>(args: &CliArgs, mut iter: impl Iterator<Item = impl std::fmt::Display>, limit: usize) {
                 let mut index: usize = 0;
                 while let Some(word) = iter.next(){

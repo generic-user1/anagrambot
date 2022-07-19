@@ -158,11 +158,76 @@ pub fn are_proper_anagrams<'a>(word_a: &str, word_b: &str, wordlist: &impl Wordl
     are_anagrams(word_a, word_b, case_sensitive)
 }
 
+pub struct AnagramsIter {
+    chars: Vec<char>,
+    stack_state: Vec<usize>,
+    i: usize
+}
 
-// TODO: use Heap's Algorithm (https://en.wikipedia.org/wiki/Heap%27s_algorithm)
-// to create a method to generate all possible anagrams of a string
-// named find_anagrams
+/// An iterator over all standard anagrams of a word
+/// 
+/// The return value of [find_anagrams]
+impl AnagramsIter {
+    pub fn new(word: &str) -> Self
+    {
+        let chars: Vec<char> = word.chars().collect();
+        let stack_state = vec![0; chars.len()];
 
+        Self { chars, stack_state, i: 1 }
+    }
+}
+
+impl Iterator for AnagramsIter {
+    type Item = String;
+
+    // heaps algorithm graciously taken from wikipedia
+    // and modified to function as a rust iterator
+    // https://en.wikipedia.org/wiki/Heap's_algorithm
+    fn next(&mut self) -> Option<Self::Item> {
+        let seq_len = self.chars.len();
+        if seq_len <= 1{
+            return None;
+        }
+        while self.i < seq_len {
+            let k = self.stack_state.get_mut(self.i).unwrap();
+            if *k < self.i {
+                if (self.i & 1) == 0 {
+                    self.chars.swap(0, self.i);
+                    
+                } else {
+                    self.chars.swap(*k, self.i);
+                }
+                // Swap has occurred ending the for-loop. Simulate the increment of the for-loop counter
+                *k += 1;
+                // Simulate recursive call reaching the base case by bringing the pointer to the base case analog in the array
+                self.i = 1;
+
+                return Some(self.chars.iter().collect());
+            } else {
+                // Calling generate(i+1, A) has ended as the for-loop terminated. Reset the state and simulate popping the stack by incrementing the pointer.
+                *k = 0;
+                self.i += 1;
+            }
+        }
+        None
+    }
+}
+
+/// Returns an [AnagramsIter] over all the standard anagrams of a word
+/// 
+/// Effectively returns an iterator over all permutations of word's characters,
+/// except the original permutation (which is skipped because a word cannot be an anagram
+/// of itself)
+/// 
+///# Notes
+/// 
+/// For a word of length `n`, there are `n! - 1` (`factorial(n) - 1`) standard anagrams.
+/// Factorials get up to extremely high output values for relatively low input values,
+/// so be careful if you intend to collect the result of this function into a vector.
+pub fn find_anagrams(word: &str) -> impl Iterator<Item = String>
+{
+    AnagramsIter::new(word)
+}
 
 /// An iterator over all the proper anagrams of a word
 /// 

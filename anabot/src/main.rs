@@ -12,7 +12,7 @@ const REASON_SECOND_NOT_WORD: &str = "second provided word is not a valid word";
 const REASON_CHARS_DIFFERENT: &str = "words do not contain the same characters in the same amounts";
 
 fn main() -> Result<(), String> {
-    const CMD: &str = "anabot -i -t loose find Adrionacks 1000";
+    const CMD: &str = "anabot -t standard find abc 1000";
     const TEST_CONSTANT_CMD: bool = false;
 
     if TEST_CONSTANT_CMD{
@@ -32,8 +32,21 @@ fn handle_args(args: CliArgs) -> Result<(), String>
     // handle Standard first, as it requires no wordlist and thus no wordlist handling
     if &args.anagram_type == &AnagramType::Standard {
         match &args.action {
-            ActionType::Find{..} => {
-                return Err("No `find` method for standard anagrams (yet)!".to_string())
+            ActionType::Find{word, limit} => {
+                let limit = *limit;
+                let mut iter = anagram::find_anagrams(word);
+                let mut index: usize = 0;
+                while let Some(word) = iter.next(){
+                    if index >= limit {
+                        break;
+                    }
+                    println!("{}", word);
+
+                    index += 1;
+                }
+                if !args.simple_output{
+                    println!("found {} standard anagrams", index);
+                }
             },
             ActionType::Test {word_a, word_b } => {
                 if anagram::are_anagrams(word_a, word_b, !args.case_insensitive){

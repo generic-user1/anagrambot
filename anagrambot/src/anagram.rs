@@ -167,15 +167,15 @@ pub fn are_proper_anagrams<'a>(word_a: &str, word_b: &str, wordlist: &impl Wordl
 /// An iterator over all the proper anagrams of a word
 /// 
 /// The return value of [find_proper_anagrams]
-pub struct ProperAnagramsIter<'a, T>
+pub struct ProperAnagramsIter<'a, 'b, T>
 where T: Iterator<Item = &'a str>
 {
-    word: &'a str,
+    word: &'b str,
     wordlist_iter: T,
     case_sensitive: bool
 }
 
-impl<'a, T> Iterator for ProperAnagramsIter<'a, T>
+impl<'a, 'b, T> Iterator for ProperAnagramsIter<'a, 'b, T>
 where T: Iterator<Item = &'a str>
 {
     type Item = &'a str;
@@ -217,8 +217,8 @@ where T: Iterator<Item = &'a str>
 /// // note that the original word "tears" is not included because
 /// // two identical words are not considered anagrams
 /// ```
-pub fn find_proper_anagrams<'a, T>(word: &'a str, wordlist: &'a T, case_sensitive: bool)
- -> ProperAnagramsIter<'a, impl Iterator<Item = &'a str>>
+pub fn find_proper_anagrams<'a, 'b, T>(word: &'b str, wordlist: &'a T, case_sensitive: bool)
+ -> ProperAnagramsIter<'a, 'b, impl Iterator<Item = &'a str>>
 where T: Wordlist<'a>
 {
     ProperAnagramsIter { word, wordlist_iter: wordlist.iter(), case_sensitive}

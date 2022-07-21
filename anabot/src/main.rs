@@ -160,7 +160,7 @@ fn do_action<'a>(args: &CliArgs, wordlist: &'a impl Wordlist<'a>)
             }
         },
         ActionType::Find { word, limit, min_word_length} => {
-            fn print_fn<'c>(args: &CliArgs, mut iter: impl Iterator<Item = impl std::fmt::Display>, limit: usize) {
+            fn print_fn(args: &CliArgs, mut iter: impl Iterator<Item = impl std::fmt::Display>, limit: usize) {
                 let mut index: usize = 0;
                 while let Some(word) = iter.next(){
                     if index >= limit {

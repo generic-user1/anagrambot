@@ -17,8 +17,16 @@ pub enum ActionType {
     /// Find and print anagrams for a word, up to a given limit
     Find {
         word: String, 
-        #[clap(default_value_t = 100)]
-        limit: usize
+        /// The maximum number of anagrams to find
+        /// 
+        /// The actual number of anagrams found may be under this limit, but never above.
+        #[clap(short, long, default_value_t = 100)]
+        limit: usize,
+        /// The minimum length of each sub-word (only used with loose anagrams)
+        /// 
+        /// For example, with this set to 3, no 1 or 2 letter words will appear in the results.
+        #[clap(short, long, default_value_t = 1)]
+        min_word_length: usize
     }
 }
 

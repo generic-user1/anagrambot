@@ -6,10 +6,6 @@ use std::path::Path;
 mod arg;
 use arg::{CliArgs, AnagramType, ActionType};
 
-/// TODO: Replace this constant with an argument
-/// need to find an intuitive way of integrating this as an argument
-const MIN_WORD_LENGTH: usize = 1;
-
 const REASON_DUPLICATES: &str = "a word cannot be an anagram of itself";
 const REASON_FIRST_NOT_WORD: &str = "first provided word is not a valid word";
 const REASON_SECOND_NOT_WORD: &str = "second provided word is not a valid word";
@@ -36,7 +32,7 @@ fn handle_args(args: CliArgs) -> Result<(), String>
     // handle Standard first, as it requires no wordlist and thus no wordlist handling
     if &args.anagram_type == &AnagramType::Standard {
         match &args.action {
-            ActionType::Find{word, limit} => {
+            ActionType::Find{word, limit, min_word_length:_} => {
                 let limit = *limit;
                 let mut iter = anagram::find_anagrams(word);
                 let mut index: usize = 0;
@@ -163,7 +159,7 @@ fn do_action<'a>(args: &CliArgs, wordlist: &'a impl Wordlist<'a>)
                 }
             }
         },
-        ActionType::Find { word, limit } => {
+        ActionType::Find { word, limit, min_word_length} => {
             fn print_fn<'c>(args: &CliArgs, mut iter: impl Iterator<Item = impl std::fmt::Display>, limit: usize) {
                 let mut index: usize = 0;
                 while let Some(word) = iter.next(){
@@ -189,7 +185,7 @@ fn do_action<'a>(args: &CliArgs, wordlist: &'a impl Wordlist<'a>)
                     print_fn(&args, anagram::find_proper_anagrams(&word, wordlist, case_sensitive), *limit);
                 },
                 AnagramType::Loose => {
-                    print_fn(&args, anagram::find_loose_anagrams(&word, wordlist, MIN_WORD_LENGTH, case_sensitive), *limit);
+                    print_fn(&args, anagram::find_loose_anagrams(&word, wordlist, *min_word_length, case_sensitive), *limit);
                 }
             }
         }

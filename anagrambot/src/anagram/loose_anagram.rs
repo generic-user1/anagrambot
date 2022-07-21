@@ -80,6 +80,10 @@ pub fn are_loose_anagrams_strict<'a>(
 /// loose anagrams may contain the same amount of spaces (i.e. proper anagrams),
 /// fewer spaces, or more spaces.
 /// 
+/// `min_length` is the minimum length a subword can have when creating loose anagrams.
+/// That is, a `min_length` of 3 would prevent any 1 or 2 letter words from appearing 
+/// in the results. `min_length` of zero is considered the same as 1.
+/// 
 ///# Technical notes
 /// 
 /// The [LooseAnagramsIterator] returns values in an unpredictable order. 
@@ -119,9 +123,14 @@ pub fn are_loose_anagrams_strict<'a>(
 /// assert_eq!(loose_anagrams_vec, 
 ///     vec!["acre car", "car acre", "car care", "car race", "care car", "race car"]);
 /// ```
-pub fn find_loose_anagrams<'a, T>(target_word: &str, wordlist: &'a T, case_sensitive:bool) 
+pub fn find_loose_anagrams<'a, T>(target_word: &str, 
+    wordlist: &'a T, 
+    min_word_length: usize,
+    case_sensitive: bool) 
 -> LooseAnagramsIterator<'a> where T: Wordlist<'a>
 {
+
+    let min_word_length = if min_word_length == 0 {1} else {min_word_length};
 
     // get the charcount map of word (ignoring spaces)
     let target_charmap = get_charcount_map(target_word, true, case_sensitive);
@@ -130,12 +139,16 @@ pub fn find_loose_anagrams<'a, T>(target_word: &str, wordlist: &'a T, case_sensi
     // and store them in full_candidate_set
     let full_candidate_set: HashMap<&str, Charmap> = wordlist.iter().filter_map(|word_b|{
             let charcount_map = get_charcount_map(word_b, true, case_sensitive);
-            if word_fits(&target_charmap, &charcount_map){
-                //dont include word if it's the same word
-                if target_word == word_b{
-                    None
+            if word_b.len() >= min_word_length {
+                if word_fits(&target_charmap, &charcount_map){
+                    //dont include word if it's the same word
+                    if target_word == word_b{
+                        None
+                    } else {
+                        Some((word_b, charcount_map))
+                    }
                 } else {
-                    Some((word_b, charcount_map))
+                    None
                 }
             } else {
                 None

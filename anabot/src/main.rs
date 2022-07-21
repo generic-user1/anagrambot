@@ -6,6 +6,10 @@ use std::path::Path;
 mod arg;
 use arg::{CliArgs, AnagramType, ActionType};
 
+/// TODO: Replace this constant with an argument
+/// need to find an intuitive way of integrating this as an argument
+const MIN_WORD_LENGTH: usize = 1;
+
 const REASON_DUPLICATES: &str = "a word cannot be an anagram of itself";
 const REASON_FIRST_NOT_WORD: &str = "first provided word is not a valid word";
 const REASON_SECOND_NOT_WORD: &str = "second provided word is not a valid word";
@@ -185,7 +189,7 @@ fn do_action<'a>(args: &CliArgs, wordlist: &'a impl Wordlist<'a>)
                     print_fn(&args, anagram::find_proper_anagrams(&word, wordlist, case_sensitive), *limit);
                 },
                 AnagramType::Loose => {
-                    print_fn(&args, anagram::find_loose_anagrams(&word, wordlist, case_sensitive), *limit);
+                    print_fn(&args, anagram::find_loose_anagrams(&word, wordlist, MIN_WORD_LENGTH, case_sensitive), *limit);
                 }
             }
         }

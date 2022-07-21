@@ -173,8 +173,11 @@ pub fn find_loose_anagrams<'a, T>(target_word: &str,
         (vec![*item.0], item.1.clone())
     }).collect();
 
+    // create an owned string from the target word
+    let target_word = target_word.to_string();
     // create a LooseAnagramsIterator from this data
     LooseAnagramsIterator{
+        target_word,
         target_charmap,
         full_candidate_set,
         candidate_map,
@@ -190,6 +193,7 @@ pub fn find_loose_anagrams<'a, T>(target_word: &str,
 /// 
 /// See the Tecnical Notes section of [find_loose_anagrams]
 pub struct LooseAnagramsIterator<'a> {
+    target_word: String,
     target_charmap: Charmap,
     full_candidate_set: HashMap<&'a str, Charmap>,
     candidate_map: HashMap<Charmap, Vec<(&'a str, Charmap)>>,
@@ -202,7 +206,12 @@ impl<'a> Iterator for LooseAnagramsIterator<'a> {
         while let Some((word_vec, word_charmap)) 
         = self.words_to_try.pop() {
             if word_charmap == self.target_charmap{
-                return Some(word_vec.join(" "));
+                let loose_anagram = word_vec.join(" ");
+                // only return if this generated anagram doesn't match
+                // the target exactly (this can happen with multi-word targets)
+                if loose_anagram != self.target_word{
+                    return Some(loose_anagram);
+                }
             } else {
                 let allowed_words = match self.candidate_map.get(&word_charmap){
                     Some(map) => map,

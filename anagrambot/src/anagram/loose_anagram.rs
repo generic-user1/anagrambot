@@ -105,6 +105,7 @@ pub fn are_loose_anagrams_strict<'a>(
 /// use anagrambot::wordlist::BorrowedWordList;
 /// 
 /// const CASE_SENSITIVE: bool = true;
+/// const MIN_WORD_LENGTH: usize = 3;
 /// 
 /// // you can use anagrambot::default_wordlist::default_wordlist()
 /// // to get the default Wordlist instead of generating your own,
@@ -112,7 +113,7 @@ pub fn are_loose_anagrams_strict<'a>(
 /// const TEST_WORD_SET: [&str; 5] = ["race", "car", "care", "racecar", "acre"];
 /// let wordlist: BorrowedWordList = TEST_WORD_SET.into_iter().collect();
 /// 
-/// let loose_anagrams_iter = find_loose_anagrams("racecar", &wordlist, CASE_SENSITIVE);
+/// let loose_anagrams_iter = find_loose_anagrams("racecar", &wordlist, MIN_WORD_LENGTH, CASE_SENSITIVE);
 /// 
 /// // The loose anagrams iterator will return its results in an unpredictable order.
 /// // If you need the results in a predictable order, you will need to collect them

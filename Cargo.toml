@@ -5,6 +5,10 @@ members = [
     "anabot"
 ]
 
+[profile.release]
+# enable 'fat' (cross-crate) link time optimization
+lto = true
+
 # a release build with debug info
 # useful for profiling (for example, with heaptrack)
 [profile.release-with-debug]

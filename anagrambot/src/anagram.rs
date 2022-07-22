@@ -158,15 +158,15 @@ pub fn are_proper_anagrams<'a>(word_a: &str, word_b: &str, wordlist: &impl Wordl
     are_anagrams(word_a, word_b, case_sensitive)
 }
 
+/// An iterator over all standard anagrams of a word
+/// 
+/// The return value of [find_anagrams]
 pub struct AnagramsIter {
     chars: Vec<char>,
     stack_state: Vec<usize>,
     i: usize
 }
 
-/// An iterator over all standard anagrams of a word
-/// 
-/// The return value of [find_anagrams]
 impl AnagramsIter {
     pub fn new(word: &str) -> Self
     {
@@ -221,9 +221,10 @@ impl Iterator for AnagramsIter {
 /// 
 ///# Notes
 /// 
-/// For a word of length `n`, there are `n! - 1` (`factorial(n) - 1`) standard anagrams.
-/// Factorials get up to extremely high output values for relatively low input values,
-/// so be careful if you intend to collect the result of this function into a vector.
+/// For a word of length `n`, there are `n! - 1` standard anagrams (`n!` meaning `factorial(n)`).
+/// Factorials get up to extremely high output values for relatively low input values.
+/// Be mindful of this if you plan to fill a vector with standard anagrams: 
+/// storing ***all*** standard anagrams of a word may require multiple gigabytes of memory.
 pub fn find_anagrams(word: &str) -> impl Iterator<Item = String>
 {
     AnagramsIter::new(word)

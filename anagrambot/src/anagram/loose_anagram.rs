@@ -11,7 +11,7 @@ use std::collections::HashMap;
 /// This function will return true if both `word_a` and `word_b` have the same characters
 /// in the same amount, regardless of spaces. Typically loose anagrams are only made up
 /// of real words (like proper anagrams), but for greater versatility, this function
-/// leaves that check as a responsibility of the caller (if desired).
+/// does not check that only real words are used.
 /// 
 /// For example:
 /// 
@@ -19,6 +19,9 @@ use std::collections::HashMap;
 /// - "racecar" and "race car" are loose anagrams
 /// - "racecar" and "rac e car" are not strictly loose anagrams because "rac" and "e" aren't
 ///    words, but this function will return `true` for "racecar" and "rac e car" despite this
+/// 
+/// If you do want to check that both words are real words, [are_loose_anagrams_strict]
+/// does perform this check.
 /// 
 ///# Examples
 /// ```

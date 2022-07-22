@@ -28,7 +28,7 @@ pub const fn default_wordlist_content() -> Option<&'static str>
     return Some(include_str!("../words.txt"));
 }
 
-/// Returns the default wordlist as a BorrowedWordlist
+/// Returns the default wordlist as a [BorrowedWordList], if present.
 /// 
 /// If the project was built normally (i.e. without the `no-default-wordlist` feature),
 /// this function will return `Some` containing the wordlist. 

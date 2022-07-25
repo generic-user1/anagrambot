@@ -68,6 +68,33 @@ fn get_charcount_map(word: &str, ignore_spaces: bool, case_sensitive: bool) -> C
     lettercount_map
 }
 
+/// Caching object for word charmaps, do not use directly
+struct WordWithCharmap<'a>{
+    word: &'a str,
+    word_charmap: Option<Charmap>,
+    case_sensitive: bool,
+    ignore_spaces: bool
+}
+
+impl<'a> WordWithCharmap<'a>{
+    pub fn new(word: &'a str, case_sensitive: bool, ignore_spaces: bool) -> Self
+    {
+        Self{word, word_charmap: None, case_sensitive, ignore_spaces}
+    }
+    pub fn get_word(&self) -> &'a str
+    {
+        return self.word
+    }
+    pub fn get_charmap(&mut self) -> &Charmap
+    {
+        if self.word_charmap == None {
+            self.word_charmap = Some(get_charcount_map(self.word, self.ignore_spaces, self.case_sensitive));
+        }
+
+        self.word_charmap.as_ref().unwrap()
+    }
+}
+
 /// Returns true if two words are anagrams
 /// 
 /// `word_a` and `word_b` are the two words to check
@@ -100,18 +127,31 @@ fn get_charcount_map(word: &str, ignore_spaces: bool, case_sensitive: bool) -> C
 /// ```
 pub fn are_anagrams(word_a: &str, word_b: &str, case_sensitive: bool) -> bool
 {
+    let mut word_a = WordWithCharmap::new(word_a, case_sensitive, false);
+    let mut word_b = WordWithCharmap::new(word_b, case_sensitive, false);
+    
+    are_anagrams_internal(&mut word_a, &mut word_b)
+}
+
+/// internal body of [are_anagrams]; do not use directly
+/// 
+/// takes in WordWithCharmap structs instead of words
+fn are_anagrams_internal(word_a: &mut WordWithCharmap, word_b: &mut WordWithCharmap) -> bool
+{
+    let word_a_internal = word_a.get_word();
+    let word_b_internal = word_b.get_word();
+
     //words can't be anagrams if their lengths are different
-    if word_a.len() != word_b.len(){
+    if word_a_internal.len() != word_b_internal.len(){
         return false;
     //two identical words are not anagrams
-    } else if word_a == word_b{
+    } else if word_a_internal == word_b_internal {
         return false;
     }
 
     //words are anagrams if both previous conditions weren't true
     //and the counts of each of their letters are identical
-    get_charcount_map(word_a, false, case_sensitive) 
-        == get_charcount_map(word_b, false, case_sensitive)
+    word_a.get_charmap() == word_b.get_charmap()
 }
 
 /// Similar to [are_anagrams] but checks that both words are real words
@@ -236,7 +276,7 @@ pub fn find_anagrams(word: &str) -> impl Iterator<Item = String>
 pub struct ProperAnagramsIter<'a, 'b, T>
 where T: Iterator<Item = &'a str>
 {
-    word: &'b str,
+    word: WordWithCharmap<'b>,
     wordlist_iter: T,
     case_sensitive: bool
 }
@@ -247,7 +287,8 @@ where T: Iterator<Item = &'a str>
     type Item = &'a str;
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(next_word) = self.wordlist_iter.next() {
-            if are_anagrams(self.word, next_word, self.case_sensitive){
+            let mut next_word_with_charmap = WordWithCharmap::new(next_word, self.case_sensitive, false);
+            if are_anagrams_internal(&mut self.word, &mut next_word_with_charmap){
                 return Some(next_word);
             }
         }
@@ -287,5 +328,6 @@ pub fn find_proper_anagrams<'a, 'b, T>(word: &'b str, wordlist: &'a T, case_sens
  -> ProperAnagramsIter<'a, 'b, impl Iterator<Item = &'a str>>
 where T: Wordlist<'a>
 {
-    ProperAnagramsIter { word, wordlist_iter: wordlist.iter(), case_sensitive}
+    let word_with_charmap = WordWithCharmap::new(word, case_sensitive, false);
+    ProperAnagramsIter { word:word_with_charmap, wordlist_iter: wordlist.iter(), case_sensitive}
 }

@@ -72,14 +72,13 @@ fn get_charcount_map(word: &str, ignore_spaces: bool, case_sensitive: bool) -> C
 struct WordWithCharmap<'a>{
     word: &'a str,
     word_charmap: Option<Charmap>,
-    case_sensitive: bool,
-    ignore_spaces: bool
+    case_sensitive: bool
 }
 
 impl<'a> WordWithCharmap<'a>{
-    pub fn new(word: &'a str, case_sensitive: bool, ignore_spaces: bool) -> Self
+    pub fn new(word: &'a str, case_sensitive: bool) -> Self
     {
-        Self{word, word_charmap: None, case_sensitive, ignore_spaces}
+        Self{word, word_charmap: None, case_sensitive}
     }
     pub fn get_word(&self) -> &'a str
     {
@@ -88,7 +87,7 @@ impl<'a> WordWithCharmap<'a>{
     pub fn get_charmap(&mut self) -> &Charmap
     {
         if self.word_charmap == None {
-            self.word_charmap = Some(get_charcount_map(self.word, self.ignore_spaces, self.case_sensitive));
+            self.word_charmap = Some(get_charcount_map(self.word, false, self.case_sensitive));
         }
 
         self.word_charmap.as_ref().unwrap()
@@ -127,8 +126,8 @@ impl<'a> WordWithCharmap<'a>{
 /// ```
 pub fn are_anagrams(word_a: &str, word_b: &str, case_sensitive: bool) -> bool
 {
-    let mut word_a = WordWithCharmap::new(word_a, case_sensitive, false);
-    let mut word_b = WordWithCharmap::new(word_b, case_sensitive, false);
+    let mut word_a = WordWithCharmap::new(word_a, case_sensitive);
+    let mut word_b = WordWithCharmap::new(word_b, case_sensitive);
     
     are_anagrams_internal(&mut word_a, &mut word_b)
 }
@@ -287,7 +286,7 @@ where T: Iterator<Item = &'a str>
     type Item = &'a str;
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(next_word) = self.wordlist_iter.next() {
-            let mut next_word_with_charmap = WordWithCharmap::new(next_word, self.case_sensitive, false);
+            let mut next_word_with_charmap = WordWithCharmap::new(next_word, self.case_sensitive);
             if are_anagrams_internal(&mut self.word, &mut next_word_with_charmap){
                 return Some(next_word);
             }
@@ -328,6 +327,6 @@ pub fn find_proper_anagrams<'a, 'b, T>(word: &'b str, wordlist: &'a T, case_sens
  -> ProperAnagramsIter<'a, 'b, impl Iterator<Item = &'a str>>
 where T: Wordlist<'a>
 {
-    let word_with_charmap = WordWithCharmap::new(word, case_sensitive, false);
+    let word_with_charmap = WordWithCharmap::new(word, case_sensitive);
     ProperAnagramsIter { word:word_with_charmap, wordlist_iter: wordlist.iter(), case_sensitive}
 }

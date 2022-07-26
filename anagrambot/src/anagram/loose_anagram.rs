@@ -143,8 +143,11 @@ pub fn find_loose_anagrams<'a, T>(target_word: &str,
     // and store them in full_candidate_set
     let full_candidate_set: HashMap<&str, Charmap> = wordlist.iter().filter_map(|word_b|{
             if word_b.chars().count() >= min_word_length {
-                let charcount_map = get_charcount_map(word_b, true, case_sensitive);
-                if word_fits(&target_charmap, &charcount_map){
+                if let Some(charcount_map) = get_fitting_charmap(
+                    word_b, 
+                    &target_charmap, 
+                    true, 
+                    case_sensitive){
                     //dont include word if it's the same word
                     if target_word == word_b{
                         None
@@ -373,4 +376,59 @@ unsafe fn sub_charmaps(big_charmap: &Charmap, small_charmap: &Charmap) -> Charma
     }
 
     new_charmap
+}
+
+/// like [get_charcount_map](super::get_charcount_map) but aborts if the charmap in progress
+/// exceeds the size of a given `bigger_charmap`
+/// 
+/// If you intend to immediately use a generated Charmap with [word_fits],
+/// this is a more efficient way of doing both at once.
+fn get_fitting_charmap(word: &str, bigger_charmap: &Charmap,
+    ignore_spaces: bool, case_sensitive: bool) -> Option<Charmap>
+{
+    let mut lettercount_map = Charmap::new();
+
+    let mut insert_closure = |letter|{
+        // if bigger charmap doesn't contain this letter, fail right away
+        if bigger_charmap.get(&letter) == None {
+            return Err(());
+        }
+
+        let count = match lettercount_map.get_mut(&letter) {
+            None => {lettercount_map.insert(letter, 1); 1},
+            Some(count) => {*count+=1; *count}
+        };
+        
+        //check count against bigger charmap
+        //unwrap is safe here because we already checked that bigger_charmap
+        //contains an entry for letter
+        let bigger_count = bigger_charmap.get(&letter).unwrap();
+        if *bigger_count >= count{
+            Ok(())
+        } else {
+            Err(())
+        }   
+    };
+
+    for letter in word.chars(){
+        if ignore_spaces && letter == ' '{
+            continue;
+        } else {
+            if case_sensitive{
+                match insert_closure(letter){
+                    Err(_) => {return None;},
+                    _ => {}
+                }
+            } else {
+                for lower_letter in letter.to_lowercase(){
+                    match insert_closure(lower_letter){
+                        Err(_) => {return None;},
+                        _ => {}
+                    }
+                }
+            }
+        }
+    }
+
+    Some(lettercount_map)
 }

@@ -135,18 +135,32 @@ pub fn are_anagrams(word_a: &str, word_b: &str, case_sensitive: bool) -> bool
 /// internal body of [are_anagrams]; do not use directly
 /// 
 /// takes in WordWithCharmap structs instead of words
+/// 
+///# Panics
+/// 
+/// This function panics if the `case_sensitive` members of both words don't match
 fn are_anagrams_internal(word_a: &mut WordWithCharmap, word_b: &mut WordWithCharmap) -> bool
 {
+
+    assert_eq!(word_a.case_sensitive, word_b.case_sensitive);
+
     let word_a_internal = word_a.get_word();
     let word_b_internal = word_b.get_word();
 
     //words can't be anagrams if their lengths are different
-    if word_a_internal.len() != word_b_internal.len(){
+    //it's ok to use byte length here when case sensitivity is enabled
+    //and we can skip checking word_b case sensitivity because we already asserted they were equal
+    if word_a.case_sensitive && word_a_internal.len() != word_b_internal.len(){
         return false;
     //two identical words are not anagrams
     } else if word_a_internal == word_b_internal {
         return false;
     }
+
+    //note that we don't do the length check if case sensitivity is disabled
+    //this is because we would need a case-agnostic char count, meaning
+    //we would have to create the charmap anyway just to check the length,
+    //defeating the purpose of the length check
 
     //words are anagrams if both previous conditions weren't true
     //and the counts of each of their letters are identical

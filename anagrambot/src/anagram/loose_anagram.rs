@@ -143,7 +143,7 @@ pub fn find_loose_anagrams<'a, T>(target_word: &str,
     // and store them in full_candidate_set
     let full_candidate_set: HashMap<&str, Charmap> = wordlist.iter().filter_map(|word_b|{
             let charcount_map = get_charcount_map(word_b, true, case_sensitive);
-            if word_b.len() >= min_word_length {
+            if word_b.chars().count() >= min_word_length {
                 if word_fits(&target_charmap, &charcount_map){
                     //dont include word if it's the same word
                     if target_word == word_b{

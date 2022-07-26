@@ -37,8 +37,5 @@ pub const fn default_wordlist_content() -> Option<&'static str>
 /// this function will return `None`.
 pub fn default_wordlist() -> Option<BorrowedWordList<'static>>
 {
-    match default_wordlist_content(){
-        None => None,
-        Some(wordlist_content) => {Some(wordlist_content.lines().collect())}
-    }
+    default_wordlist_content().map(|wordlist_content|{wordlist_content.lines().collect()})
 }

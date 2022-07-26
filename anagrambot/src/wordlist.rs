@@ -44,14 +44,14 @@ impl<'a> FromIterator<&'a str> for BorrowedWordList<'a>{
 }
 
 impl<'a> Wordlist<'a> for BorrowedWordList<'a>{
-    type IterType = std::iter::Map<std::slice::Iter<'a, &'a str>, fn(&&'a str) -> &'a str>;
+    type IterType = std::iter::Copied<std::slice::Iter<'a, &'a str>>;
 
     fn includes_word(&self, word: &str) -> bool {
         self.word_vec.contains(&word)
     }
 
     fn iter(&'a self) -> Self::IterType {
-        self.word_vec.iter().map(|d: &&'a str|->&'a str{*d})
+        self.word_vec.iter().copied()
     }
 }
 

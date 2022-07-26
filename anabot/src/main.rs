@@ -22,13 +22,13 @@ fn main() -> Result<(), String> {
 fn handle_args(args: CliArgs) -> Result<(), String>
 {
     // handle Standard first, as it requires no wordlist and thus no wordlist handling
-    if &args.anagram_type == &AnagramType::Standard {
+    if args.anagram_type == AnagramType::Standard {
         match &args.action {
             ActionType::Find{word, limit, min_word_length:_} => {
                 let limit = *limit;
-                let mut iter = anagram::find_anagrams(word);
+                let iter = anagram::find_anagrams(word);
                 let mut index: usize = 0;
-                while let Some(word) = iter.next(){
+                for word in iter {
                     if index >= limit {
                         break;
                     }
@@ -47,18 +47,17 @@ fn handle_args(args: CliArgs) -> Result<(), String>
                     } else {
                         println!("\"{}\" is standard anagram of \"{}\"", word_a, word_b);
                     }
+                } else if args.simple_output{
+                    println!("false");
                 } else {
-                    if args.simple_output{
-                        println!("false");
+                    println!("\"{}\" is not standard anagram of \"{}\"", word_a, word_b);
+                    if word_a == word_b {
+                        println!("Reason: {}", REASON_DUPLICATES);
                     } else {
-                        println!("\"{}\" is not standard anagram of \"{}\"", word_a, word_b);
-                        if word_a == word_b {
-                            println!("Reason: {}", REASON_DUPLICATES);
-                        } else {
-                            println!("Reason: {}", REASON_CHARS_DIFFERENT);
-                        }
+                        println!("Reason: {}", REASON_CHARS_DIFFERENT);
                     }
                 }
+                
             }
         }
     } else {
@@ -67,7 +66,7 @@ fn handle_args(args: CliArgs) -> Result<(), String>
         // if this succeeds, call do_action to perform whatever action
         if let Some(wordlist_path) = &args.wordlist_path {
             let wordlist = match OwnedWordList::from_file(
-                &Path::new(wordlist_path))
+                Path::new(wordlist_path))
             {
                 Ok(wordlist) => wordlist,
                 Err(_) => {
@@ -112,12 +111,12 @@ fn do_action<'a>(args: &CliArgs, wordlist: &'a impl Wordlist<'a>)
                 AnagramType::Standard => panic!("{}", PANIC_MSG),
                 AnagramType::Proper => {
                     let are_anagrams = 
-                    anagram::are_proper_anagrams(&word_a, &word_b, wordlist, case_sensitive);
+                    anagram::are_proper_anagrams(word_a, word_b, wordlist, case_sensitive);
                     (are_anagrams, "proper")
                 },
                 AnagramType::Loose => {
                     let are_anagrams = 
-                    anagram::are_loose_anagrams_strict(&word_a, &word_b, wordlist, case_sensitive);
+                    anagram::are_loose_anagrams_strict(word_a, word_b, wordlist, case_sensitive);
                     (are_anagrams, "loose")
                 }
             };
@@ -128,33 +127,31 @@ fn do_action<'a>(args: &CliArgs, wordlist: &'a impl Wordlist<'a>)
                 } else {
                     println!("false");
                 }
+            } else if are_anagrams{
+                println!("\"{}\" is {} anagram of \"{}\"",word_a, anagram_name, word_b);
             } else {
-                if are_anagrams{
-                    println!("\"{}\" is {} anagram of \"{}\"",word_a, anagram_name, word_b);
+                println!("\"{}\" is not {} anagram of \"{}\"",word_a, anagram_name, word_b);
+                if word_a == word_b {
+                    println!("Reason: {}", REASON_DUPLICATES);
                 } else {
-                    println!("\"{}\" is not {} anagram of \"{}\"",word_a, anagram_name, word_b);
-                    if word_a == word_b {
-                        println!("Reason: {}", REASON_DUPLICATES);
-                    } else {
-                        let word_a_real = wordlist.includes_word(&word_a);
-                        let word_b_real = wordlist.includes_word(&word_b);
-                        if !word_a_real {
-                            println!("Reason: {}", REASON_FIRST_NOT_WORD);
-                        }
-                        if !word_b_real {
-                            println!("Reason: {}", REASON_SECOND_NOT_WORD);
-                        }
-                        if word_a_real && word_b_real {
-                            println!("Reason: {}", REASON_CHARS_DIFFERENT);
-                        }
-                    } 
+                    let word_a_real = wordlist.includes_word(word_a);
+                    let word_b_real = wordlist.includes_word(word_b);
+                    if !word_a_real {
+                        println!("Reason: {}", REASON_FIRST_NOT_WORD);
+                    }
+                    if !word_b_real {
+                        println!("Reason: {}", REASON_SECOND_NOT_WORD);
+                    }
+                    if word_a_real && word_b_real {
+                        println!("Reason: {}", REASON_CHARS_DIFFERENT);
+                    }
                 }
             }
         },
         ActionType::Find { word, limit, min_word_length} => {
-            fn print_fn(args: &CliArgs, mut iter: impl Iterator<Item = impl std::fmt::Display>, limit: usize) {
+            fn print_fn(args: &CliArgs, iter: impl Iterator<Item = impl std::fmt::Display>, limit: usize) {
                 let mut index: usize = 0;
-                while let Some(word) = iter.next(){
+                for word in iter{
                     if index >= limit {
                         break;
                     }
@@ -174,10 +171,10 @@ fn do_action<'a>(args: &CliArgs, wordlist: &'a impl Wordlist<'a>)
             match &args.anagram_type {
                 AnagramType::Standard => panic!("{}", PANIC_MSG),
                 AnagramType::Proper => {
-                    print_fn(&args, anagram::find_proper_anagrams(&word, wordlist, case_sensitive), *limit);
+                    print_fn(args, anagram::find_proper_anagrams(word, wordlist, case_sensitive), *limit);
                 },
                 AnagramType::Loose => {
-                    print_fn(&args, anagram::find_loose_anagrams(&word, wordlist, *min_word_length, case_sensitive), *limit);
+                    print_fn(args, anagram::find_loose_anagrams(word, wordlist, *min_word_length, case_sensitive), *limit);
                 }
             }
         }

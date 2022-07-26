@@ -54,15 +54,13 @@ fn get_charcount_map(word: &str, ignore_spaces: bool, case_sensitive: bool) -> C
     for letter in word.chars(){
         if ignore_spaces && letter == ' '{
             continue;
+        } else if case_sensitive{
+            insert_closure(letter);
         } else {
-            if case_sensitive{
-                insert_closure(letter);
-            } else {
-                for lower_letter in letter.to_lowercase(){
-                    insert_closure(lower_letter);
-                }
+            for lower_letter in letter.to_lowercase(){
+                insert_closure(lower_letter);
             }
-        }
+        }   
     }
 
     lettercount_map
@@ -82,7 +80,7 @@ impl<'a> WordWithCharmap<'a>{
     }
     pub fn get_word(&self) -> &'a str
     {
-        return self.word
+        self.word
     }
     pub fn get_charmap(&mut self) -> &Charmap
     {
@@ -150,10 +148,9 @@ fn are_anagrams_internal(word_a: &mut WordWithCharmap, word_b: &mut WordWithChar
     //words can't be anagrams if their lengths are different
     //it's ok to use byte length here when case sensitivity is enabled
     //and we can skip checking word_b case sensitivity because we already asserted they were equal
-    if word_a.case_sensitive && word_a_internal.len() != word_b_internal.len(){
-        return false;
+    if word_a.case_sensitive && word_a_internal.len() != word_b_internal.len()
     //two identical words are not anagrams
-    } else if word_a_internal == word_b_internal {
+    || word_a_internal == word_b_internal {
         return false;
     }
 
@@ -201,9 +198,7 @@ pub fn are_proper_anagrams<'a>(word_a: &str, word_b: &str, wordlist: &impl Wordl
     case_sensitive: bool) -> bool
 {
     //return false if either word is not found in wordlist
-    if !wordlist.includes_word(word_a){
-        return false;
-    } else if !wordlist.includes_word(word_b){
+    if !wordlist.includes_word(word_a) || !wordlist.includes_word(word_b) {
         return false;
     }
 
@@ -299,7 +294,7 @@ where T: Iterator<Item = &'a str>
 {
     type Item = &'a str;
     fn next(&mut self) -> Option<Self::Item> {
-        while let Some(next_word) = self.wordlist_iter.next() {
+        for next_word in self.wordlist_iter.by_ref() {
             let mut next_word_with_charmap = WordWithCharmap::new(next_word, self.case_sensitive);
             if are_anagrams_internal(&mut self.word, &mut next_word_with_charmap){
                 return Some(next_word);

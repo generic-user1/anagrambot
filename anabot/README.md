@@ -17,6 +17,10 @@ and the `anabot` CLI tool.
 
     - e.g. `cargo install --path ./anabot`
 
+4. Run the `anabot` binary
+
+    - e.g. `anabot --help`
+
 ## Dependencies
 
 - [anagrambot](https://github.com/generic-user1/anagrambot) for anagram related functionality

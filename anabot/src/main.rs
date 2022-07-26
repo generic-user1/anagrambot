@@ -12,16 +12,8 @@ const REASON_SECOND_NOT_WORD: &str = "second provided word is not a valid word";
 const REASON_CHARS_DIFFERENT: &str = "words do not contain the same characters in the same amounts";
 
 fn main() -> Result<(), String> {
-    const CMD: &str = "anabot -t standard find abc -l 1000";
-    const TEST_CONSTANT_CMD: bool = false;
-
-    if TEST_CONSTANT_CMD{
-        let args = CliArgs::parse_from(CMD.split_ascii_whitespace());
-        handle_args(args)
-    } else {
-        let args = CliArgs::parse();
-        handle_args(args)
-    }
+    let args = CliArgs::parse();
+    handle_args(args)
 }
 
 /// main arg handling function

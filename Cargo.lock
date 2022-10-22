@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "anabot"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "anagrambot",
  "clap",
@@ -12,7 +12,7 @@ dependencies = [
 
 [[package]]
 name = "anagrambot"
-version = "1.0.0"
+version = "1.0.1"
 
 [[package]]
 name = "atty"

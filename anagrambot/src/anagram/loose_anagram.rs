@@ -169,14 +169,12 @@ pub fn find_loose_anagrams<'a, T>(target_word: &str,
     // vector containing the words to test fit into target word
     // this is where created words will be stored before verification
     // once verified, they are moved to result_vec
-    let words_to_try: Vec<(Vec<&str>, Charmap)>;
+    let words_to_try: Vec<(Vec<&str>, Charmap)> =
     //tuple member 1 is the words that combine to make this word
     //tuple member 2 is the charmap of this word
-    //tuple member 3 is the reduced charmap of this word's parent,
-    //which was used to find this word
 
     // initially fill words_to_try with the candidate set
-    words_to_try = full_candidate_set.iter().map(|item|{
+    full_candidate_set.iter().map(|item|{
         (vec![*item.0], item.1.clone())
     }).collect();
 
@@ -245,7 +243,7 @@ impl<'a> Iterator for LooseAnagramsIterator<'a> {
 
                                     let allowed_words = self.full_candidate_set.iter()
                                                 .filter_map(|item|{
-                                                    if word_fits(&reduced_map, &item.1){
+                                                    if word_fits(&reduced_map, item.1){
                                                         Some((*item.0, item.1.clone()))
                                                     } else {
                                                         None
@@ -284,7 +282,7 @@ impl<'a> Iterator for LooseAnagramsIterator<'a> {
                     subword_vec.push(subword);
 
                     let summed_map = 
-                        add_charmaps(&word_charmap, &submap);
+                        add_charmaps(&word_charmap, submap);
                     self.words_to_try.push((subword_vec, summed_map));
                 }
             }
@@ -413,18 +411,14 @@ fn get_fitting_charmap(word: &str, bigger_charmap: &Charmap,
     for letter in word.chars(){
         if ignore_spaces && letter == ' '{
             continue;
+        } else if case_sensitive{
+            if insert_closure(letter) == Err(()){
+                return None;
+            }
         } else {
-            if case_sensitive{
-                match insert_closure(letter){
-                    Err(_) => {return None;},
-                    _ => {}
-                }
-            } else {
-                for lower_letter in letter.to_lowercase(){
-                    match insert_closure(lower_letter){
-                        Err(_) => {return None;},
-                        _ => {}
-                    }
+            for lower_letter in letter.to_lowercase(){
+                if insert_closure(lower_letter) == Err(()){
+                    return None;
                 }
             }
         }
